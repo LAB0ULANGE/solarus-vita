@@ -102,27 +102,11 @@ int exception_boundary_handle(
     lua_State* l,
     Callable&& func
 ) {
-  try {
-    return func();
-  }
-  catch (const LuaException& ex) {
-    // Error in user script, detected by Solarus.
-    luaL_error(l, ex.what());
-  }
-  catch (const SolarusFatal& ex) {
-    // Internal Solarus bug.
-    luaL_error(l, (std::string("Internal error: ") + ex.what()).c_str());
-  }
-  catch (const std::exception& ex) {
-    // Probably also a Solarus bug.
-    luaL_error(l, (std::string("Internal error: ") + ex.what()).c_str());
-  }
-  // If we get another exception type, just don't catch it.
-  // Because with LuaJIT, it can already be a Lua error properly wrapped in a
-  // C++ exception. Generating a new Lua error from it would repeat the
-  // file and line number in the error message.
-
-  return 0;
+  // C++ exceptions are disabled on this platform (PS Vita): every error
+  // path now reports errors directly via luaL_error()/Debug::die() instead
+  // of throwing, so there is nothing left to catch here.
+  (void) l;
+  return func();
 }
 
 /**

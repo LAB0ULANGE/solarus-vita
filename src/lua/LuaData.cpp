@@ -138,34 +138,32 @@ bool LuaData::export_to_buffer(std::string& buffer) const {
  */
 bool LuaData::export_to_file(const std::string& file_name) const {
 
-  // Work on a temporary file to keep the initial one intact in case of failure.
-  std::string tmp_file_name = file_name + ".solarus_tmp";
-  std::ofstream tmp_out(tmp_file_name);
-  if (!tmp_out) {
+  // Build the content in memory first (no real file involved here).
+  std::ostringstream oss;
+  if (!export_to_lua(oss)) {
     return false;
   }
+  const std::string data = oss.str();
 
-  if (!export_to_lua(tmp_out)) {
+  // Write to a temporary file first, then replace the final file.
+  std::string tmp_file_name = file_name + ".solarus_tmp";
+  FILE* tmp_out = fopen(tmp_file_name.c_str(), "wb");
+  if (tmp_out == nullptr) {
+    return false;
+  }
+  size_t written = fwrite(data.data(), 1, data.size(), tmp_out);
+  fclose(tmp_out);
+  if (written != data.size()) {
     std::remove(tmp_file_name.c_str());
     return false;
   }
-  tmp_out.flush();
-  tmp_out.close();
 
-  std::ifstream in(tmp_file_name);
-  if (!in) {
+  std::remove(file_name.c_str());
+  if (std::rename(tmp_file_name.c_str(), file_name.c_str()) != 0) {
+    std::remove(tmp_file_name.c_str());
     return false;
   }
-  std::ofstream out(file_name);
-  if (!out) {
-    return false;
-  }
-  out << in.rdbuf();
 
-  in.close();
-  std::remove(tmp_file_name.c_str());
-  out.flush();
-  out.close();
   return true;
 }
 

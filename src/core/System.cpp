@@ -1,3 +1,4 @@
+#include <cstdio>
 /*
  * Copyright (C) 2006-2019 Christopho, Solarus - http://www.solarus-games.org
  *
@@ -49,6 +50,11 @@ uint64_t System::ticks = 0;
  * \param resource_provider The resource provider.
  */
 void System::initialize(const Arguments& args, ResourceProvider& resource_provider) {
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S1\n"); fclose(dbgf); }
+  }
+
 
 #if _POSIX_C_SOURCE >= 200112L
   // Back up state of environment variables about to be modified.
@@ -67,6 +73,10 @@ void System::initialize(const Arguments& args, ResourceProvider& resource_provid
   setenv("SDL_VIDEO_WAYLAND_WMCLASS", SOLARUS_APP_ID ".Runner", 1);
 #endif
 
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S2\n"); fclose(dbgf); }
+  }
   // configure a game controller database file if it exists
   const auto gcdb_filename = "gamecontrollerdb.txt";
   std::string gcdb_full_path;
@@ -76,7 +86,8 @@ void System::initialize(const Arguments& args, ResourceProvider& resource_provid
     const auto base_path = SDL_GetBasePath();
     if (base_path != nullptr) {
       const auto full_path = std::string(base_path) + gcdb_filename;
-      if (std::filesystem::exists(full_path)) {
+      std::error_code ec;
+      if (std::filesystem::exists(full_path, ec) && !ec) {
         gcdb_full_path = full_path;
       }
     }
@@ -86,7 +97,8 @@ void System::initialize(const Arguments& args, ResourceProvider& resource_provid
   // if still not found, try the installed data directory path
   if (gcdb_full_path.empty()) {
     const auto full_path = std::string(SOLARUS_DATADIR_PATH) + "/" + gcdb_filename;
-    if (std::filesystem::exists(full_path)) {
+    std::error_code ec;
+    if (std::filesystem::exists(full_path, ec) && !ec) {
       gcdb_full_path = full_path;
     }
   }
@@ -97,8 +109,17 @@ void System::initialize(const Arguments& args, ResourceProvider& resource_provid
     SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG_FILE, gcdb_full_path.c_str());
   }
 
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S3\n"); fclose(dbgf); }
+  }
   // initialize SDL
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S4\n"); fclose(dbgf); }
+  }
+
   initial_time = Clock::now();
   ticks = 0;
 
@@ -121,8 +142,17 @@ void System::initialize(const Arguments& args, ResourceProvider& resource_provid
   }
 #endif
 
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S5\n"); fclose(dbgf); }
+  }
   // audio
   Sound::initialize(args, &resource_provider);
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S6\n"); fclose(dbgf); }
+  }
+
 
   // input
   InputEvent::initialize(args);
@@ -130,8 +160,17 @@ void System::initialize(const Arguments& args, ResourceProvider& resource_provid
   // random number generator
   Random::initialize();
 
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S7\n"); fclose(dbgf); }
+  }
   // video
   Video::initialize(args);
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: S8\n"); fclose(dbgf); }
+  }
+
   FontResource::initialize();
   Sprite::initialize();
 }

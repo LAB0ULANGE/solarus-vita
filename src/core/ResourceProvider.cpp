@@ -52,6 +52,26 @@ void ResourceProvider::start_preloading_resources() {
   }
 
   // Start loading them in a separate thread.
+#ifdef __vita__
+  // std::thread creation is unreliable on PS Vita with this toolchain
+  // (relies on the same broken low-level mechanism as C++ exceptions).
+  // Just load resources synchronously here instead of in the background.
+  auto preload_task = [this, tilesets_to_preload, sounds_to_preload]() {
+    for (const std::shared_ptr<SoundBuffer>& sound : sounds_to_preload) {
+      if (sound_cache.empty()) {
+        return;
+      }
+      sound->load();
+    }
+    for (const std::shared_ptr<Tileset>& tileset : tilesets_to_preload) {
+      if (tileset_cache.empty()) {
+        return;
+      }
+      tileset->load();
+    }
+  };
+  preload_task();
+#else
   preloader_thread = std::thread([this, tilesets_to_preload, sounds_to_preload]() {
 
     for (const std::shared_ptr<SoundBuffer>& sound : sounds_to_preload) {
@@ -72,6 +92,7 @@ void ResourceProvider::start_preloading_resources() {
       std::this_thread::yield();
     }
   });
+#endif
 }
 
 /**

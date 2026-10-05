@@ -129,6 +129,15 @@ GlRenderer::GlRenderer(SDL_GLContext sdl_ctx) :
 
 RendererPtr GlRenderer::create(SDL_Window* window, bool force_software) {
 
+#ifdef __vita__
+  // PS Vita has no real OpenGL: SDL_GL_CreateContext() is unreliable/can
+  // hang on this platform. Always skip GlRenderer entirely here, instead
+  // of via force_software, so SDLRenderer's own hardware-accelerated
+  // (GXM-based) path below is not disabled as a side effect.
+  (void) window;
+  return nullptr;
+#endif
+
   if(force_software) {
     return nullptr; // this renderer does not support software rendering
   }

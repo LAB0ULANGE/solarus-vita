@@ -796,6 +796,12 @@ void Controls::load_default_joypad_bindings() {
   joypad_mapping[JoypadBinding(JoyPadAxis::LEFT_Y, AxisDirection::PLUS)] = CommandId::DOWN;
   joypad_mapping[JoypadBinding(JoyPadAxis::LEFT_Y, AxisDirection::MINUS)] = CommandId::UP;
 
+  // D-pad as directions too, in addition to the left stick.
+  joypad_mapping[JoypadBinding(JoyPadButton::DPAD_UP)] = CommandId::UP;
+  joypad_mapping[JoypadBinding(JoyPadButton::DPAD_DOWN)] = CommandId::DOWN;
+  joypad_mapping[JoypadBinding(JoyPadButton::DPAD_LEFT)] = CommandId::LEFT;
+  joypad_mapping[JoypadBinding(JoyPadButton::DPAD_RIGHT)] = CommandId::RIGHT;
+
   joypad_mapping[JoypadBinding(JoyPadButton::A)] = CommandId::ATTACK;
   joypad_mapping[JoypadBinding(JoyPadButton::X)] = CommandId::ITEM_1;
   joypad_mapping[JoypadBinding(JoyPadButton::B)] = CommandId::ACTION;

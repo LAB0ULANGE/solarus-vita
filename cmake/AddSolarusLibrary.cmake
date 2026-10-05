@@ -3,6 +3,13 @@
 add_library(solarus "")
 include(cmake/SolarusLibrarySources.cmake)
 
+# Force libstdc++ to use single-threaded internal code paths on Vita,
+# avoiding a broken pthread-embedded dependency.
+target_sources(solarus
+  PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/gthread_override.c"
+)
+
 # Add additional public/private sources for Apple systems
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   target_sources(solarus
@@ -25,12 +32,32 @@ target_link_libraries(solarus
     SDL2::Image
     SDL2::TTF
     GLM::GLM
-    OpenAL::OpenAL
+    $<IF:$<BOOL:${VITASDK}>,mojoal,OpenAL::OpenAL>
     PhysFS::PhysFS
     Vorbis::File
     Vorbis::Vorbis
     Ogg::Ogg
     ModPlug::ModPlug
+    freetype
+    png16
+    z
+    bz2
+    webpdemux
+    webp
+    SceAppMgr_stub
+    SceKernelThreadMgr_stub
+    SceAudioIn_stub
+    SceSblSsMgr_stub
+    SceAudio_stub
+    SceCommonDialog_stub
+    SceCtrl_stub
+    SceDisplay_stub
+    SceGxm_stub
+    SceHid_stub
+    SceMotion_stub
+    SceSysmodule_stub
+    SceTouch_stub
+    taihen_stub
 )
 
 # Add dynamic loader library if required

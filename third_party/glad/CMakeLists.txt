@@ -22,7 +22,7 @@ target_compile_options(glad
 set_target_properties(glad
   PROPERTIES
     FOLDER "third_party"
-    POSITION_INDEPENDENT_CODE ON
+    POSITION_INDEPENDENT_CODE OFF
 )
 
 install(

@@ -36,7 +36,7 @@ target_compile_options(snes_spc
 set_target_properties(snes_spc
   PROPERTIES
     FOLDER "third_party"
-    POSITION_INDEPENDENT_CODE ON
+    POSITION_INDEPENDENT_CODE OFF
 )
 
 install(

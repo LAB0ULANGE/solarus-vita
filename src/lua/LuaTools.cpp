@@ -266,7 +266,10 @@ bool call_function(
  * \param message Error message.
  */
 void error(lua_State* l, const std::string& message) {
-  throw LuaException(l, message);
+  // Use Lua's native error mechanism (longjmp-based) directly instead of
+  // throwing a C++ exception, to avoid a broken C++ exception runtime path
+  // on PS Vita. This function never returns.
+  luaL_error(l, "%s", message.c_str());
 }
 
 /**

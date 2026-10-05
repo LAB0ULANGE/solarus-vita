@@ -27,7 +27,7 @@ target_compile_options(hqx
 set_target_properties(hqx
   PROPERTIES
     FOLDER "third_party"
-    POSITION_INDEPENDENT_CODE ON
+    POSITION_INDEPENDENT_CODE OFF
 )
 
 install(

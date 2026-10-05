@@ -112,12 +112,11 @@ void SOLARUS_API die(const std::string& error_message) {
     );
   }
 
-  if (abort_on_die) {
-    std::abort();
-  }
-  else {
-    throw SolarusFatal(error_message);
-  }
+  // Always abort rather than throwing a C++ exception here: this function
+  // is not necessarily called from within a Lua call context, and C++
+  // exception unwinding is broken on PS Vita with this toolchain.
+  (void) abort_on_die;
+  std::abort();
 }
 
 }

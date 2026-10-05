@@ -38,6 +38,19 @@ class ExportableToLua:
     ExportableToLua();
     virtual ~ExportableToLua();
 
+    // Shadow std::enable_shared_from_this's shared_from_this() on purpose:
+    // the base version throws std::bad_weak_ptr on failure, and C++
+    // exception unwinding is broken on PS Vita with this toolchain.
+    // weak_from_this().lock() never throws; it returns an empty (null)
+    // shared_ptr instead. This override applies to every derived class
+    // too (Entity, Hero, Camera, etc.) for any unqualified call.
+    inline std::shared_ptr<ExportableToLua> shared_from_this() {
+      return weak_from_this().lock();
+    }
+    inline std::shared_ptr<const ExportableToLua> shared_from_this() const {
+      return weak_from_this().lock();
+    }
+
     LuaContext* get_lua_context() const;
     void set_lua_context(LuaContext* lua_context);
     bool is_known_to_lua() const;
@@ -51,7 +64,11 @@ class ExportableToLua:
      * @return
      */
     inline const std::shared_ptr<T> shared_from_this_cast(){
-      return std::static_pointer_cast<T>(shared_from_this());
+      // Use weak_from_this().lock() instead of shared_from_this() here:
+      // the latter throws std::bad_weak_ptr on failure, and C++ exception
+      // unwinding is broken on PS Vita with this toolchain. lock() never
+      // throws; it just returns an empty (null) shared_ptr on failure.
+      return std::static_pointer_cast<T>(weak_from_this().lock());
     }
 
     template<class T>

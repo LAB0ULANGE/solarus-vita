@@ -121,6 +121,9 @@ namespace Video {
 
     Size get_output_size();
     Size get_output_size_no_bars();
+#ifdef __vita__
+    void toggle_vita_stretch();
+#endif
 
     void set_geometry_mode(Video::GeometryMode mode);
     Video::GeometryMode get_geometry_mode();

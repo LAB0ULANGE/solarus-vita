@@ -1,3 +1,4 @@
+#include <cstdio>
 /*
  * Copyright (C) 2018-2020 std::gregwar, Solarus - http://www.solarus-games.org
  *
@@ -61,21 +62,38 @@ RendererPtr SDLRenderer::create(SDL_Window* window, bool force_software) {
   }
 
   // Set OpenGL as the default renderer driver when available, to avoid using Direct3d.
+#ifndef __vita__
   SDL_SetHintWithPriority(SDL_HINT_RENDER_DRIVER, "opengl", SDL_HINT_DEFAULT);
+#endif
 
+#ifndef __vita__
+  // On Vita, never force SDL's render driver to "software": we want
+  // SDL2's own hardware-accelerated (GXM-based) renderer instead.
   if(force_software) {
     SDL_SetHintWithPriority(SDL_HINT_RENDER_DRIVER, "software", SDL_HINT_OVERRIDE);
   }
+#endif
 
   // Set the default OpenGL built-in shader (nearest).
   SDL_SetHint(SDL_HINT_RENDER_OPENGL_SHADERS, "1");
 
+#ifdef __vita__
+  // Always try the hardware-accelerated (GXM-based) SDL renderer on Vita,
+  // regardless of force_software: that flag here only exists to keep
+  // GlRenderer/window creation from touching real OpenGL, which is a
+  // separate, unrelated concern from SDL2's own Vita renderer backend.
+  SDL_Renderer* renderer = SDL_CreateRenderer(
+          window,
+          -1,
+          SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+#else
   SDL_Renderer* renderer = force_software ?
         nullptr :
         SDL_CreateRenderer(
           window,
           -1,
           SDL_RENDERER_ACCELERATED);
+#endif
   if(not renderer) {
     renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_SOFTWARE);
   }
@@ -87,6 +105,17 @@ RendererPtr SDLRenderer::create(SDL_Window* window, bool force_software) {
 
     auto size = Video::get_quest_size();
     SDL_RenderSetLogicalSize(renderer,size.width,size.height);
+    {
+      int ww = 0, wh = 0, ow = 0, oh = 0;
+      SDL_GetWindowSize(window, &ww, &wh);
+      SDL_GetRendererOutputSize(renderer, &ow, &oh);
+      FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+      if (dbgf) {
+        fprintf(dbgf, "SOLARUS_DEBUG: R window=%dx%d output=%dx%d logical=%dx%d\n",
+            ww, wh, ow, oh, size.width, size.height);
+        fclose(dbgf);
+      }
+    }
 
     return RendererPtr(new SDLRenderer(renderer, shaders));
   }
@@ -213,8 +242,39 @@ void SDLRenderer::present(SDL_Window* /*window*/) {
   SDL_RenderPresent(renderer);
 }
 
+#ifdef __vita__
+// R button: toggle between a centered 1:1 view and a full-screen stretch.
+static bool vita_stretched = false;
+void solarus_vita_toggle_stretch() {
+  vita_stretched = !vita_stretched;
+}
+#endif
+
 void SDLRenderer::on_window_size_changed(const Rectangle& viewport) {
+#ifdef __vita__
+  if (vita_stretched) {
+    // The window surface is drawn over the whole viewport: give it the
+    // full 960x544 screen, with no extra scale on top.
+    SDL_RenderSetScale(renderer, 1.0f, 1.0f);
+    SDL_Rect full;
+    full.x = 0;
+    full.y = 0;
+    full.w = 960;
+    full.h = 544;
+    SDL_RenderSetViewport(renderer, &full);
+  } else {
+    // Center the display area on the real 960x544 screen.
+    SDL_RenderSetScale(renderer, 1.0f, 1.0f);
+    SDL_Rect centered;
+    centered.w = viewport.get_width();
+    centered.h = viewport.get_height();
+    centered.x = (960 - centered.w) / 2;
+    centered.y = (544 - centered.h) / 2;
+    SDL_RenderSetViewport(renderer, &centered);
+  }
+#else
   SDL_RenderSetViewport(renderer,viewport);
+#endif
 }
 
 /**

@@ -56,3 +56,10 @@ tags
 # build files.
 /solarus-editor-build/
 /solarus-launcher-build/
+build-vita/
+/mojoAL/
+vita-parse-core/
+build_log2.txt
+*.psp2dmp
+*.vpk
+*.log

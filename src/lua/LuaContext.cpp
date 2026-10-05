@@ -1,3 +1,4 @@
+#include <cstdio>
 /*
  * Copyright (C) 2006-2019 Christopho, Solarus - http://www.solarus-games.org
  *
@@ -107,14 +108,28 @@ MainLoop& LuaContext::get_main_loop() {
  * \brief Initializes Lua.
  */
 void LuaContext::initialize(const std::string& arg_script) {
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: L1\n"); fclose(dbgf); }
+  }
 
   // Create an execution context.
   main_l = current_l = luaL_newstate();
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: L2\n"); fclose(dbgf); }
+  }
+
   lua_atpanic(current_l, l_panic);
   luaL_openlibs(current_l);
 
   // Lua version.
   find_lua_version();
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: L3\n"); fclose(dbgf); }
+  }
+
   Logger::info(std::string("LuaJIT: ") + (luajit ? "yes" : "no") + " (" + lua_version + ")");
 
   // Associate this LuaContext object to the lua_State pointer.
@@ -145,8 +160,17 @@ void LuaContext::initialize(const std::string& arg_script) {
   lua_newtable(current_l);
   lua_setglobal(current_l, "sol");
 
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: L4\n"); fclose(dbgf); }
+  }
   // Register the C++ functions and types accessible by Lua.
   register_modules();
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: L5\n"); fclose(dbgf); }
+  }
+
 
   // Make require() able to load Lua files even from the
   // data.solarus or data.solarus.zip archive.
@@ -158,6 +182,11 @@ void LuaContext::initialize(const std::string& arg_script) {
   lua_setfield(current_l, -2, "loader");
                                   // -- sol
   luaL_dostring(current_l, "table.insert(package.loaders, 2, sol.loader)");
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: L6\n"); fclose(dbgf); }
+  }
+
                                   // -- sol
   lua_pushnil(current_l);
                                   // -- sol nil
@@ -185,12 +214,29 @@ void LuaContext::initialize(const std::string& arg_script) {
     do_string(arg_script,"script argument (-s)");
   }
 
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: N1\n"); fclose(dbgf); }
+  }
   // Execute the main file.
   do_file_if_exists("main");
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: N2\n"); fclose(dbgf); }
+  }
 
   SOLARUS_REQUIRE(lua_gettop(current_l) == 0, "Non-empty Lua stack after running main.lua");
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: N3\n"); fclose(dbgf); }
+  }
 
   main_on_started();
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: N4\n"); fclose(dbgf); }
+  }
+
 }
 
 /**
@@ -797,9 +843,29 @@ void LuaContext::do_file(const std::string& script_name) {
  * \return true if the file exists and was successfully executed.
  */
 bool LuaContext::do_file_if_exists(const std::string& script_name) {
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: M1\n"); fclose(dbgf); }
+  }
 
-  if (load_file(script_name)) {
+  bool loaded = load_file(script_name);
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: M2\n"); fclose(dbgf); }
+  }
+
+  if (loaded) {
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: M3\n"); fclose(dbgf); }
+  }
+
     LuaTools::call_function(current_l, 0, 0, script_name.c_str());
+  {
+    FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbgf) { fprintf(dbgf, "SOLARUS_DEBUG: M4\n"); fclose(dbgf); }
+  }
+
     return true;
   }
   return false;
@@ -1201,16 +1267,20 @@ void LuaContext::push_userdata(lua_State* l, ExportableToLua& userdata) {
                                   // ... all_udata lightudata
 
     // Find the existing shared_ptr from the raw pointer.
+    // Use weak_from_this() instead of shared_from_this() here: the latter
+    // throws std::bad_weak_ptr on failure, and C++ exception unwinding is
+    // broken on PS Vita with this toolchain.
     ExportableToLuaPtr shared_userdata;
-    try {
-      shared_userdata = userdata.shared_from_this();
-    }
-    catch (const std::bad_weak_ptr& ex) {
+    std::weak_ptr<ExportableToLua> weak_userdata = userdata.weak_from_this();
+    if (weak_userdata.expired()) {
       // No existing shared_ptr. This is probably because you forgot to
       // store your object in a shared_ptr at creation time.
       Debug::die(
           std::string("No living shared_ptr for ") + userdata.get_lua_type_name()
       );
+    }
+    else {
+      shared_userdata = weak_userdata.lock();
     }
 
     ExportableToLuaPtr* block_address = static_cast<ExportableToLuaPtr*>(

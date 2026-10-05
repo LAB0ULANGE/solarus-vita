@@ -141,7 +141,15 @@ SOLARUS_API bool open_quest(const std::string& program_name, const std::string& 
     argv0 = strdup(program_name.c_str());
   }
 
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: QA\n"); fclose(dbg); }
+  }
   PHYSFS_init(argv0);
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: QB\n"); fclose(dbg); }
+  }
 
   quest_path_ = quest_path;
 
@@ -167,12 +175,29 @@ SOLARUS_API bool open_quest(const std::string& program_name, const std::string& 
   // Set the engine root write directory.
   set_solarus_write_dir(SOLARUS_WRITE_DIR);
 
-  if (!quest_exists()) {
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: QC\n"); fclose(dbg); }
+  }
+  bool qe = quest_exists();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: QC2 quest_exists=%d\n", (int)qe); fclose(dbg); }
+  }
+  if (!qe) {
     return false;
+  }
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: QD\n"); fclose(dbg); }
   }
 
   // Set the quest write directory.
   CurrentQuest::initialize();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: QE\n"); fclose(dbg); }  }
+
   set_quest_write_dir(CurrentQuest::get_properties().get_quest_write_dir());
 
   return true;
@@ -577,9 +602,9 @@ SOLARUS_API std::string create_temporary_file(const std::string& content) {
   file_name = std::tmpnam(nullptr);
 #endif
 
-  std::ofstream out(file_name.c_str());
+  FILE* out = fopen(file_name.c_str(), "wb");
 
-  if (!out) {
+  if (out == nullptr) {
     return "";
   }
 
@@ -587,13 +612,13 @@ SOLARUS_API std::string create_temporary_file(const std::string& content) {
   temporary_files_.push_back(file_name);
 
   if (!content.empty()) {
-    out.write(content.data(), content.size());
-    if (!out) {
+    size_t written = fwrite(content.data(), 1, content.size(), out);
+    if (written != content.size()) {
       file_name = "";
     }
   }
 
-  out.close();
+  fclose(out);
 
   return file_name;
 }

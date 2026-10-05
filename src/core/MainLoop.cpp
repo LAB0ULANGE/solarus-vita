@@ -14,6 +14,10 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifdef __vita__
+#include <psp2/kernel/clib.h>
+#include <cstdio>
+#endif
 #include "solarus/audio/MusicSystem.h"
 #include "solarus/core/Arguments.h"
 #include "solarus/core/CurrentQuest.h"
@@ -166,6 +170,10 @@ MainLoop::MainLoop(const Arguments& args):
   lua_console_enabled = lua_console_arg == "yes";
   lua_script_arg = args.get_argument_value("-s");
 
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: 1 before open_quest\n"); fclose(dbg); }
+  }
   // Try to open the quest.
   const std::string& quest_path = get_quest_path(args);
   Logger::info("Opening quest '" + quest_path + "'");
@@ -173,22 +181,46 @@ MainLoop::MainLoop(const Arguments& args):
     Debug::error("No quest was found in the directory '" + quest_path + "'");
     return;
   }
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: 2 after open_quest, before System::initialize\n"); fclose(dbg); }
+  }
 
   // Initialize engine features (audio, video...).
   System::initialize(args, resource_provider);
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: 3 after System::initialize, before CurrentQuest::initialize\n"); fclose(dbg); }
+  }
 
   // Read the quest resource list from data.
   CurrentQuest::initialize();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: 4 after CurrentQuest::initialize, before load_quest_properties\n"); fclose(dbg); }
+  }
 
   // Read the quest general properties.
   load_quest_properties();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: 5 after load_quest_properties, before make_root_surface\n"); fclose(dbg); }
+  }
 
   make_root_surface();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: 6 after make_root_surface, before LuaContext creation\n"); fclose(dbg); }
+  }
 
   // Run the Lua world.
   // Do this after the creation of the window, but before showing the window,
   // because Lua might change the video mode initially.
   lua_context = std::unique_ptr<LuaContext>(new LuaContext(*this));
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: 7 after LuaContext creation\n"); fclose(dbg); }
+  }
 
   if(Video::get_renderer().needs_window_workaround()) {
     Video::show_window();
@@ -198,6 +230,10 @@ MainLoop::MainLoop(const Arguments& args):
     lua_context->initialize(lua_script_arg);
   }
 
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: P1\n"); fclose(dbg); }
+  }
   if (lua_console_enabled) {
     Logger::info("Lua console: yes");
     initialize_lua_console();
@@ -205,6 +241,11 @@ MainLoop::MainLoop(const Arguments& args):
   else {
     Logger::info("Lua console: no");
   }
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: P2\n"); fclose(dbg); }
+  }
+
 
   if (turbo) {
     Logger::info("Turbo mode: yes");
@@ -215,12 +256,27 @@ MainLoop::MainLoop(const Arguments& args):
 
   // Start loading resources in background.
   resource_provider.start_preloading_resources();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: P3\n"); fclose(dbg); }
+  }
+
 
   // Display the game icon as window icon (if any)
   setup_game_icon();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: P4\n"); fclose(dbg); }
+  }
+
 
   // Show the window.
   Video::show_window();
+  {
+    FILE* dbg = fopen("ux0:data/solarus_debug.log", "a");
+    if (dbg) { fprintf(dbg, "SOLARUS_DEBUG: P5\n"); fclose(dbg); }
+  }
+
 
   // Set the fullscreen mode if requested.
   const std::string& fullscreen_arg = args.get_argument_value("-fullscreen");
@@ -632,7 +688,19 @@ void MainLoop::setup_game_icon() {
  * It forwards the event to Lua, and then to the game if Lua did not
  * handle it.
  */
+#ifdef __vita__
+void solarus_vita_toggle_stretch();
+#endif
+
 void MainLoop::notify_input(const InputEvent& event) {
+#ifdef __vita__
+  // R button: toggle between centered and stretched display.
+  if (event.is_joypad_button_pressed() &&
+      event.get_joypad_button() == JoyPadButton::RIGHT_SHOULDER) {
+    Video::toggle_vita_stretch();
+    return;
+  }
+#endif
 
   bool handled = false;
   if (event.is_window_closing()) {

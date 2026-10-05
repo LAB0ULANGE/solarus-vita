@@ -1,3 +1,4 @@
+#include <cstdio>
 /*
  * Copyright (C) 2006-2019 Christopho, Solarus - http://www.solarus-games.org
  *
@@ -123,6 +124,13 @@ void create_window(const Arguments& args) {
   SOLARUS_REQUIRE(context.main_window == nullptr, "Window already exists");
 
   bool force_software = args.has_argument("-force-software-rendering");
+#ifdef __vita__
+  // The Vita SDL2 video driver refuses to create a window with the
+  // SDL_WINDOW_OPENGL flag at all, so this must stay true to keep the
+  // window creation itself from failing. SDLRenderer below is patched
+  // separately to still attempt hardware acceleration regardless.
+  force_software = true;
+#endif
 
   if(force_software) {
     Logger::info("Forcing software rendering : shaders will be unavailable");
@@ -936,10 +944,38 @@ Rectangle get_letter_box(const Size& basesize) {
  * @brief Window resize event
  * @param size new window size
  */
+#ifdef __vita__
+static bool vita_stretched = false;
+
+void toggle_vita_stretch() {
+  vita_stretched = !vita_stretched;
+  // Stretched: the window surface covers the whole 960x544 screen.
+  // Normal: the current video mode's initial size, centered by SDLRenderer.
+  if (vita_stretched) {
+    on_window_resized(Size{960, 544});
+  } else {
+    on_window_resized(context.video_mode->get_initial_window_size());
+  }
+}
+#endif
+
 void on_window_resized(const Size& size) {
   switch (context.geometry.mode) {
   case Video::GeometryMode::LETTER_BOXING:{
+#ifdef __vita__
+    Rectangle letter = vita_stretched ? Rectangle(size) : get_letter_box(size);
+#else
     Rectangle letter = get_letter_box(size);
+#endif
+    {
+      FILE* dbgf = fopen("ux0:data/solarus_debug.log", "a");
+      if (dbgf) {
+        fprintf(dbgf, "SOLARUS_DEBUG: V window=%dx%d letter=%d,%d %dx%d\n",
+            size.width, size.height,
+            letter.get_x(), letter.get_y(), letter.get_width(), letter.get_height());
+        fclose(dbgf);
+      }
+    }
     context.renderer->on_window_size_changed(letter);
     SurfaceImplPtr surface_impl = context.renderer->create_window_surface(context.main_window,letter.get_width(),letter.get_height());
     context.screen_surface = Surface::create(surface_impl);

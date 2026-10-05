@@ -14,6 +14,9 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifdef __vita__
+#include <psp2/kernel/clib.h>
+#endif
 #include "solarus/audio/MusicSystem.h"
 #include "solarus/audio/Sound.h"
 #include "solarus/core/Arguments.h"
@@ -534,7 +537,7 @@ bool Sound::start() {
     }
   }
 
-  SoundPtr shared_this = std::static_pointer_cast<Sound>(shared_from_this());
+  SoundPtr shared_this = std::static_pointer_cast<Sound>(weak_from_this().lock());
   current_sounds.remove(shared_this);  // To avoid duplicates.
   current_sounds.push_back(shared_this);
   alSourcePlay(source);
