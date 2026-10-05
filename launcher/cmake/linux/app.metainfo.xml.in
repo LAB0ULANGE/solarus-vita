@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>@SOLARUSLAUNCHER_APP_IDENTIFIER@</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>@SOLARUSLAUNCHER_LICENSE@</project_license>
+  <name>@SOLARUSLAUNCHER_DISPLAY_NAME@</name>
+  <summary>Launcher for Solarus video games</summary>
+  <summary xml:lang="fr">Lecteur de jeux vidéos Solarus</summary>
+  <summary xml:lang="es">Lanzador de videojuegos Solarus</summary>
+  <description>
+    <p>
+      Solarus Launcher is a game launcher and manager for free and open-source games built on the Solarus engine. Play, organize, and download your favorite Solarus quests.
+    </p>
+    <p xml:lang="fr">
+      Solarus Launcher est un lanceur et gestionnaire de jeux vidéos libres et open-source faits avec le moteur Solarus. Jouez, organisezet téléchargez vos quêtes Solarus préférées.
+    </p>
+    <p xml:lang="es">
+      Solarus Launcher es un iniciador y administrador para juegos gratuito y de código abierto creado sobre el motor Solarus. Juega, organiza y descarga tus búsquedas Solarus favoritas.
+    </p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <caption>An example of a game made with Solarus</caption>
+      <image ype="source" width="1920" height="1440">https://www.solarus-games.org/screenshots/screenshot1.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">@PROJECT_HOMEPAGE_URL@</url>
+  <url type="bugtracker">@LINKS_BUGTRACKER@</url>
+  <url type="help">@LINKS_HELP@</url>
+  <url type="donation">@LINKS_DONATION@</url>
+  <url type="contact">@LINKS_CONTACT@</url>
+  <update_contact>@SOLARUSLAUNCHER_EMAIL@</update_contact>
+  <launchable type="desktop-id">@SOLARUSLAUNCHER_APP_IDENTIFIER@.desktop</launchable>
+  <project_group>Solarus</project_group>
+  <developer>@SOLARUSLAUNCHER_ORGANISATION@</developer>
+  <provides>
+    <id>@SOLARUSLAUNCHER_APP_IDENTIFIER@.desktop</id>
+  </provides>
+  <categories>
+    <category>Game</category>
+  </categories>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <supports>
+    <internet>offline-only</internet>
+  </supports>
+  <branding>
+    <color type="primary" scheme_preference="light">#ffab00</color>
+    <color type="primary" scheme_preference="dark">#ffab00</color>
+  </branding>
+</component>

@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+      <file>icon_theme/edit-copy.svg</file>
+      <file>icon_theme/edit-cut.svg</file>
+      <file>icon_theme/edit-delete.svg</file>
+      <file>icon_theme/edit-paste.svg</file>
+      <file>icon_theme/edit-redo.svg</file>
+      <file>icon_theme/edit-select-all.svg</file>
+      <file>icon_theme/edit-undo.svg</file>
+      <file>icon_theme/go-down.svg</file>
+      <file>icon_theme/go-up.svg</file>
+    </qresource>
+</RCC>

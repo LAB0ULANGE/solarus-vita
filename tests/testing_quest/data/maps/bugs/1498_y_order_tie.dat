@@ -1,0 +1,427 @@
+properties{
+  x = 0,
+  y = 0,
+  width = 320,
+  height = 240,
+  min_layer = 0,
+  max_layer = 2,
+  tileset = "castle",
+}
+
+tile{
+  layer = 0,
+  x = 0,
+  y = 0,
+  width = 320,
+  height = 240,
+  pattern = "3",
+}
+
+block{
+  name = "block_17",
+  layer = 0,
+  x = 88,
+  y = 157,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_18",
+  layer = 0,
+  x = 120,
+  y = 157,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_16",
+  layer = 0,
+  x = 56,
+  y = 157,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_15",
+  layer = 0,
+  x = 24,
+  y = 157,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_10",
+  layer = 0,
+  x = 120,
+  y = 93,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_9",
+  layer = 0,
+  x = 88,
+  y = 93,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_8",
+  layer = 0,
+  x = 56,
+  y = 93,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_7",
+  layer = 0,
+  x = 24,
+  y = 93,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_20",
+  layer = 0,
+  x = 56,
+  y = 61,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_20",
+  layer = 0,
+  x = 56,
+  y = 61,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_17",
+  layer = 0,
+  x = 88,
+  y = 157,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_15",
+  layer = 0,
+  x = 24,
+  y = 157,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_14",
+  layer = 0,
+  x = 120,
+  y = 125,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_12",
+  layer = 0,
+  x = 56,
+  y = 125,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_9",
+  layer = 0,
+  x = 88,
+  y = 93,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_7",
+  layer = 0,
+  x = 24,
+  y = 93,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_6",
+  layer = 0,
+  x = 120,
+  y = 61,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+npc{
+  name = "npc_4",
+  layer = 0,
+  x = 128,
+  y = 21,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_1",
+  layer = 0,
+  x = 24,
+  y = 21,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+destination{
+  name = "destination",
+  layer = 0,
+  x = 296,
+  y = 29,
+  direction = 1,
+}
+
+npc{
+  name = "npc_1",
+  layer = 0,
+  x = 24,
+  y = 29,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_2",
+  layer = 0,
+  x = 56,
+  y = 29,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_2",
+  layer = 0,
+  x = 56,
+  y = 21,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_3",
+  layer = 0,
+  x = 96,
+  y = 21,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_3",
+  layer = 0,
+  x = 88,
+  y = 29,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_4",
+  layer = 0,
+  x = 120,
+  y = 29,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_5",
+  layer = 0,
+  x = 88,
+  y = 61,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_5",
+  layer = 0,
+  x = 88,
+  y = 61,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_6",
+  layer = 0,
+  x = 120,
+  y = 61,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_8",
+  layer = 0,
+  x = 56,
+  y = 93,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_10",
+  layer = 0,
+  x = 120,
+  y = 93,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_11",
+  layer = 0,
+  x = 24,
+  y = 125,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_11",
+  layer = 0,
+  x = 24,
+  y = 125,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_12",
+  layer = 0,
+  x = 56,
+  y = 125,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_13",
+  layer = 0,
+  x = 88,
+  y = 125,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_13",
+  layer = 0,
+  x = 88,
+  y = 125,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+
+block{
+  name = "block_14",
+  layer = 0,
+  x = 120,
+  y = 125,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_16",
+  layer = 0,
+  x = 56,
+  y = 157,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_18",
+  layer = 0,
+  x = 120,
+  y = 157,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+block{
+  name = "block_19",
+  layer = 0,
+  x = 24,
+  y = 61,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+}
+
+npc{
+  name = "npc_19",
+  layer = 0,
+  x = 24,
+  y = 61,
+  direction = 3,
+  subtype = 1,
+  sprite = "npc/sign",
+}
+

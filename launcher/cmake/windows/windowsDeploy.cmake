@@ -1,0 +1,20 @@
+install(TARGETS ${PROJECT_NAME}
+  LIBRARY DESTINATION . COMPONENT ${COMPONENT_NAME}
+  RUNTIME DESTINATION . COMPONENT ${PROJECT_NAME}
+)
+  # TODO: check if $<TARGET_FILE:${PROJECT_NAME}> can be used in the install script
+qt_generate_deploy_script(
+  TARGET ${PROJECT_NAME}
+  OUTPUT_SCRIPT DEPLOY_SCRIPT
+  CONTENT "
+qt_deploy_runtime_dependencies(
+  EXECUTABLE \"$<TARGET_FILE:${PROJECT_NAME}>\"
+  BIN_DIR .
+  GENERATE_QT_CONF
+  VERBOSE
+)
+")
+
+if(DEPLOY_SCRIPT)
+  install(SCRIPT "${DEPLOY_SCRIPT}" COMPONENT ${PROJECT_NAME})
+endif()

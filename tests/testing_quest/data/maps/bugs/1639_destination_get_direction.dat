@@ -1,0 +1,59 @@
+properties{
+  x = 0,
+  y = 0,
+  width = 320,
+  height = 240,
+  min_layer = 0,
+  max_layer = 2,
+  tileset = "castle",
+}
+
+tile{
+  layer = 0,
+  x = 0,
+  y = 0,
+  width = 320,
+  height = 240,
+  pattern = "3",
+}
+
+destination{
+  name = "destination_1",
+  layer = 0,
+  x = 56,
+  y = 29,
+  direction = 1,
+}
+
+destination{
+  name = "destination_0",
+  layer = 0,
+  x = 24,
+  y = 29,
+  direction = 0,
+}
+
+destination{
+  name = "destination_2",
+  layer = 0,
+  x = 88,
+  y = 29,
+  direction = 2,
+}
+
+destination{
+  name = "destination_3",
+  layer = 0,
+  x = 120,
+  y = 29,
+  direction = 3,
+}
+
+destination{
+  name = "destination_nil",
+  layer = 0,
+  x = 152,
+  y = 29,
+  direction = -1,
+}
+

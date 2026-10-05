@@ -1,0 +1,407 @@
+# Changelog
+
+## Solarus Editor 2.0.3 (2026-01-21)
+
+* Fix crash on editor startup if the quest was not found (#1962).
+* Fix contour generator icons column size and dark mode (#1949).
+* Fix non empty tileset on generated contour tiles when it's tileset of the map (#1932).
+* Fix scaling factor of tileset, map and sprite editors (#1903).
+* Fix text editor syntax hightlighting when multiple instances on the same line (#1714).
+* Fix welcome tab translations.
+* Meaningful error message when trying to create a map when there is no tileset (#1954).
+
+## Solarus Editor 2.0.2 (2025-12-05)
+
+* Memorization of layout splitters (#1914).
+* Show welcome tab when opening the editor without a quest.
+* Fix crash when dragging patterns onto the contours list (#1948).
+* Fix memory leak when switching tilesets in the map editor (#1940).
+* Fix external text editor option on Linux and macOS (!1625).
+* Fix DMG layout and graphics.
+
+## Solarus Editor 2.0.1 (2025-07-23)
+
+* Fix empty tileset selector (#1724).
+* Fix crash when opening a tileset without PNG file.
+* Fix tiles position following the mouse when picked from the tileset view.
+* Fix wrong entity selection below entities just added (#1905).
+* Fix some buttons icons black in dark mode (#1737).
+* Fix group/ungroup buttons initially enabled (#1739).
+* Sprite editor: avoid activating checkbox when clicking empty space (#1760).
+* Adjust combobox dropdown size when expanding folders.
+* Adjust tree view, map properties and entity toolbar sizes for better usage (#1913).
+* Ability to toggle quest file tree from menu and F6 key (#1707).
+
+## Solarus Editor 2.0.0 (2025-04-01)
+
+### New features
+
+* Dark mode support and more modern UI style using the Qlementine library.
+* New quest creation wizard (#460).
+* Reopen last tabs also when a quest is given in the command line.
+* Allow to reopen the last closed tab (#165).
+* Graphics view now show a checkered background to represent transparency.
+* New option to not generate default code when creating scripts (#528).
+* Allow to set author and license when creating folders, Lua and GLSL scripts.
+* Show two license fields when creating a new map.
+* Map editor: allow to run the current map for testing purposes (#517).
+* Map editor: allow to group and ungroup entities (#126).
+* Map editor: allow to lock entities to prevent moving or resizing (#462).
+* Map editor: create teletransporters with scrolling if on the edge (#473).
+* Map editor: allow custom entities of any size (#538).
+* Tileset editor: allow to resize tile patterns (#159).
+* Sprite editor: allow to create a sprite from an image (#527).
+* Add a "Find previous" button to text editor search (#353).
+* Add error reporting to the quest runner process.
+* Add support of ANSI color codes to the GUI console.
+* Allow to clear the console (#436).
+* Script editor: find remembers last text searched (#426).
+* Script editor: allows search backwards (#353).
+
+### Bug fixes
+
+* Prevent from creating a resource file with no name before the extension.
+* Fix importing a language from another quest (#530).
+* Map editor: fix tileset scrollbars jumping when switching tilesets (#510).
+* Map editor: fix contour generation from other tilesets.
+* Map editor: fix origin lost when copy-pasting a custom entity (#432).
+* Map editor: fix editing an entity being resized or moved.
+* Map editor: update contour selector when the tileset file has changed.
+* Dialogs editor: prevent invalid custom property keys and values (#352, #276).
+* Dialogs editor: remove the margin display broken feature.
+* Script editor: fix crash when indenting the last line (#546).
+* Fix zoom clamping in map, tileset, sprite and image views (#513).
+* Initial quest: fix item icon amount displaying.
+* Initial quest: fix item icon still showing unequiped items.
+* Initial quest: fix missing heart falling animation error.
+* Initial quest: fix missing broken vase sprite.
+* Fix running quest on Windows when binaries are under Unicode paths.
+* Use monospaced font consistently across platforms in the GUI console.
+* Preserve empty lines from the engine in the GUI console.
+* Only remove trailing '\n' characters in the GUI console.
+
+### Other changes
+
+* The sample quest is no longer included with the Solarus Quest Editor. It has not been
+  updated in a long time and became outdated for the current version of the editor.
+
+## Solarus Quest Editor 1.6.5 (2021-04-06)
+
+* Map editor: fix crash when generating contours with missing patterns (#494).
+* Map editor: fix resize and edit shortcuts not working sometimes (#272).
+* Import dialog: fix file count inconsistencies (#446).
+* Script editor: fix crash when indenting wrapped lines (#440).
+
+## Solarus Quest Editor 1.6.4 (2020-04-12)
+
+* Fix spin boxes breaking the UI on Windows (#486).
+
+## Solarus Quest Editor 1.6.3 (2020-04-11)
+
+* Add Ocean Set tilesets to the initial quest (#478).
+* Map editor: fix contours generated tileset specific (#485).
+* Map editor: fix a crash when undoing changing the layer of entities (#471).
+* Tileset editor: save the update maps option when renaming patterns (#483).
+* Tileset editor: fix moving patterns to an overlapping position (#477).
+* Tileset editor: fix crash when a tileset file changes while dragging (#476).
+* Fix possible crash when closing the window.
+* Fix opening local documentation in Windows.
+* Fix tiles getting unwanted `enabled_at_start` field in map data files.
+
+## Solarus Quest Editor 1.6.2 (2019-08-15)
+
+* Fix crash when closing tileset views (#467).
+* Fix broken enemies in the initial quest (#466).
+* Fix Ctrl-B shortcut not working for contour generation.
+* Automatically install translation files.
+* Add author and license fields when creating new resources.
+* Update French translation.
+
+## Solarus Quest Editor 1.6.1 (2019-08-10)
+
+* Allow to build a quest package (#431).
+* Map editor: allow teletransporters to have any size multiple of 8 pixels.
+* Map editor: improve performance of deleting multiple entities.
+* Map editor: fix performance of changing entities layer (#454).
+* Map editor: fix wrong selections after undoing changing layers.
+* Tileset editor: fix performance of removing multiple patterns (#456).
+* Sprite editor: fix persisting error message about missing source image (#451).
+* Dialogs editor: fix line wrapping.
+* Initial quest: remove proprietary file added by mistake.
+* Add Force Software Rendering option to 'Running' section (stdgregwar).
+
+## Solarus Quest Editor 1.6.0 (2018-12-22)
+
+* Allow to import files from other quests (#4).
+* Quest tree: show all .png and .dat files (#260).
+* Quest tree: show all language files, map files and tileset files.
+* Quest tree: allow to set the author and license information of files.
+* Quest tree: automatically select the currently open file (#336).
+* Quest tree: allow to update sprites when renaming a .png file (#420).
+* Quest tree: allow to open folders with the system explorer (#316).
+* Quest tree: allow to select multiple files.
+* Quest tree: allow to delete multiple files and directories (#354).
+* Allow to view PNG files (#335).
+* Map/tileset editor: allow to generate borders automatically (autotiles).
+* Map editor: add support of custom properties for entities by Maxs (#327).
+* Map editor: allow to use multiple tilesets in the same map.
+* Map editor: allow to change the pattern of existing tiles (#280).
+* Map editor: allow to change the pattern of all similar tiles at once (#329).
+* Map editor: allow to change the origin of custom entities.
+* Map editor: allow to initially enable or disable any entity.
+* Map editor: allow to export the view as a PNG file (#81).
+* Map editor: allow to lock layers (#94).
+* Map editor: show the layer under the cursor in the status bar (#91).
+* Map editor: add shortcuts to show/hide negative layers too.
+* Map editor: keep the selection after adding entities with ctrl or shift.
+* Map editor: add a shortcut to open the tileset by Akadream (#241).
+* Map editor: don't reload the tileset if it is already open elsewhere (#350).
+* Map editor: automatically reload the tileset when it has changed (#362, #375).
+* Tileset editor: allow to change the frame number and delay of patterns.
+* Tileset editor: allow to duplicate tile patterns (#188).
+* Tileset editor: allow to move several patterns at once (#171).
+* Sprite editor: allow to reorder directions by Maxs (#144).
+* Sprite editor: allow to change the frame number graphically by Maxs (#147).
+* Sprite editor: the default origin is now 8,13 as usual in Solarus (#307).
+* Sprite editor: fix precision issues when creating or moving directions.
+* Sprite editor: fix scrollbars reset when adding directions by Maxs (#277).
+* Dialog editor: show the line and column number.
+* Script editor: allow a replace option to the find dialog by Akadream (#3).
+* Allow to select map/tileset/sprite/etc. ids to copy-paste them (#170).
+* Lua console: provide variables game, map, entities and function tp (#268).
+* Clear the console when a quest is started (#230).
+* Fix resource declaration not updated when renaming a directory (#337).
+* Fix crash when opening quest in non-UTF8 filesystems (#373).
+* Fix error message when opening a read-only quest (#264).
+* Fix memory not released when closing an editor (#306).
+* Initial quest: add some shaders (#320).
+* Text editor: allow to set an external editor to be used instead of the
+built-in one (#398)
+
+## Solarus Quest Editor 1.5.3 (2017-04-01)
+
+* Initial quest: add enemy killed animation from Diarandor.
+* Initial quest: fix the source image of the bomb sprite.
+* Initial quest: make musics loop without separate file for their intro (#267).
+* Initial quest: add sounds from the Solarus Free Resource Pack.
+* Initial quest: play a sound with the Solarus logo.
+* Fix error message when converting from older formats to 1.5.2.
+
+## Solarus Quest Editor 1.5.2 (2016-12-06)
+
+* Fix recursive folders when creating a quest in initial_quest itself (#253).
+
+## Solarus Quest Editor 1.5.1 (2016-11-29)
+
+### New features
+
+* Spanish translation (thanks Diarandor!).
+* Update maps when renaming musics, enemies and custom entities (#222).
+
+### Bug fixes
+
+* Fix resizing the console when a sprite editor is open (#215).
+* Fix quest reopened even if it was closed in previous session (#220).
+* Fix renaming .it and .spc musics.
+* Fix typos in the dialogs and strings editors (#231).
+* Fix typo in French translation (#240).
+* Map editor: fix update teletransporters checkbox in tile edit dialog (#221).
+* Map editor: fix setting destructible objects non liftable (#247).
+* Map editor: save all only if necessary when renaming a destination (#219).
+* Map editor: fix tileset view scrollbar position lost sometimes (#229).
+* Map editor: fix escape accepting resize/move instead of cancelling it (#217).
+* Tileset editor: fix selected pattern view after refreshing the image (#218).
+* Text editor: fix freeze when indenting selected lines sometimes.
+* Text editor: don't indent empty lines.
+* Initial quest: put the solarus logo script in scripts/menus/ (#216)
+* Initial quest: fix wrong hero sprite after game-over.
+
+## Solarus Quest Editor 1.5.0 (2016-07-27)
+
+### New features
+
+* Add an execution log view of the quest.
+* Add a console to execute Lua instructions when the quest is running.
+* Add a command-line option -run to run a quest instead of opening the GUI.
+* Allow to save all open files at once (#98).
+* Allow to close all open files at once.
+* Allow to close the current quest (#88).
+* Allow to reorder tabs (#107).
+* Allow to switch tabs with keyboard shortcuts (#101).
+* Allow to automatically save files before running the quest (#90).
+* Allow to restore open tabs at startup (#131).
+* Add a recent quests menu (#89).
+* Creating a new quest now provides a lot of initial resources (#201).
+* Creating a new quest now sets the write directoy to a unique id (#207).
+* Resource directories are now automatically created when opening a quest.
+* The shortcut to load a quest is now Ctrl+L.
+* Add a menu item to open quest properties (#206).
+* Allow to update teletransporters when changing the id of a map (#56).
+* Allow to update teletransporters when renaming a destination (#58).
+* Allow to update maps when changing the id of a tileset (#57).
+* Add resource dialog: set the id as initial value for the description (#192).
+* Initialize map/item/enemy/entity scripts with helpful code (#33).
+* Automatically add .lua extension when creating a script file (#46).
+* Allow to play musics and sounds from the quest tree (#8).
+* Allow to play music and sounds from music and sound selectors.
+* Show the sprite of each element in enemy and item selectors (#9).
+* Map editor: allow more than 3 layers.
+* Map editor: implement smart resizing to resize full rooms at once (#54).
+* Map editor: allow to resize from the left and from the top (#111).
+* Map editor: shortcuts for showing/hiding layers are now 0, 1 and 2, etc.
+* Map editor: add shortcuts to show/hide entity types (#82).
+* Map editor: allow to show/hide obstacles (#6).
+* Map editor: add shortcuts to move one layer up or down (+ and -).
+* Map editor: add Escape shortcut to stop adding entities (#92).
+* Map editor: new entity icons by Amine (#119).
+* Map editor: show the real variant of pickables (#109).
+* Tileset editor: propose to refresh the image when it has changed (#86).
+* Tileset editor: don't force the user to close maps before renaming patterns.
+* Tileset editor: add settings (#178).
+* Sprite editor: check the value of frame to loop on (#203).
+* Sprite editor: auto-detect the grid size (#13).
+* Settings: add sprite editor options.
+* Add select all to map, tileset and text editors (#106).
+* Add unselect all to map, tileset and text editors (#115).
+
+### Bug fixes
+
+* Fix wrong hero movements sometimes when playing from the editor (#138).
+* Fix tabs not closed when opening another quest (#44).
+* Fix the drop-down list of resource selectors too small on some systems.
+* Map editor: fix crash when creating a block with a missing sprite (#195).
+* Map editor: fix performance regression when pasting a lot of entities (#141).
+* Map editor: fix entities still shown when put on a hidden layer.
+* Map editor: fix precision when starting selection above existing entities.
+* Map editor: stop adding tiles when unselecting them from the tileset view.
+* Map editor: uncheck entity creation button after adding an entity (#105).
+* Map editor: keep tileset scroll position when refreshing/changing it (#129).
+* Map editor: improve performance of selecting multiple entities.
+* Map editor: improve performance of moving multiple entities.
+* Map editor: fix multiple default destinations when copy-pasting (#118).
+* Tileset editor: improve performance of deleting multiple tile pattenrs (#120).
+* Text editor: improve tabulation behavior (#43).
+* Text editor: fix multiline comments matching to the end of the line (#63).
+* Sprite editor: fix "missing image" message staying after solving it (#191).
+* Quest properties: don't allow slashes or backslashes in the write dir (#59).
+
+## Solarus Quest Editor 1.4.5 (2015-11-22)
+
+Bugfix release for the 1.4 branch.
+
+* Add keyboard shortcut (F4) to switch between map view and map script (#75).
+* Map editor: fix entity being moved after closing its dialog (#76).
+* Map editor: start selection when clicking a tile with control/shift (#47).
+* Map editor: synchronize tile patterns selection from map selection (#35).
+* Tileset editor: fix scrollbars reset when zooming with Ctr+wheel.
+* Sprite editor: improve auto-selection after removing a direction (#70).
+* Dialogs/strings editor: add a duplicate button (#72).
+* Dialogs/strings editor: Shows also missing marks on parent nodes (#68).
+* Fix crash on FreeBSD when running the quest (#112).
+* Fix crash on Mac OS X 64 bit.
+* Fix crash when removing from the tree a resource that does not exist (#124).
+
+## Solarus Quest Editor 1.4.4 (2015-08-20)
+
+Bugfix release for the 1.4 branch.
+
+* Map editor: add a button to open the script (#39).
+* Dialogs/strings editor: the name is now selected when renaming (#73).
+* Sprite editor: guess the source image; set `sprite_id.png` if exists (#71).
+* Sprite editor: select the sibling item when removing a direction (#70).
+* Sprite editor: add a context menu in tree view and missing shortcuts (#69).
+* Sprite editor: fix change selection no update frame delay of previewer (#67).
+* Protect resource description fields from wrong characters (#74).
+
+## Solarus Quest Editor 1.4.3 (2015-08-13)
+
+Bugfix release for the 1.4 branch.
+
+* Quest properties editor: fix setting the write directory field empty (#36).
+* Sprite editor: add a button to refresh the source image (#50).
+* Map editor: fix crash when resizing with no entities selected (#51).
+* Map editor: fix entities still visible when adding them on a hidden layer.
+* Map editor: fix entity dialog allowing to set illegal sizes (#23).
+* Map editor: fix changing the direction of a jumper from the dialog (#60).
+* Map editor: fix sprites not always updated when changing direction (#32).
+* Map editor: show a context menu when right-clicking an empty space (#26).
+* Tileset editor: fix usability issues to create and select patterns (#31).
+* Tileset editor: fix moving a pattern to a partially overlapping place (#29).
+* Tileset editor: fix color when moving a pattern to an occuped place (#34).
+* Tileset editor: fix existing selection lost if selecting with ctrl or shift.
+* Text editor: the find button is now the default one in the find dialog (#30).
+* Dialogs editor: fix crash when comparing empty dialogs (#48).
+* Dialogs editor: ensure that the text ends with a newline (#45).
+* Make the numpad enter key work like the return key (#49).
+* Check the Solarus library version at compilation time (#41).
+
+## Solarus Quest Editor 1.4.2 (2015-05-09)
+
+Bugfix release for the 1.4 branch.
+
+* Fix inversion between generalized and usual NPCs in the entity dialog box.
+
+## Solarus Quest Editor 1.4.1 (2015-05-09)
+
+Bugfix release for the 1.4 branch.
+
+* Fix crash when copy-pasting both tiles and dynamic entities sometimes (#24).
+* Fix crash when creating a map when no tileset exists.
+* Fix the view not updated when resizing a map (#25).
+* Fix maps having having an initial size of zero.
+* Fix the choice of the layer when copy-pasting entities.
+* Fix a precision issue when adding or moving entities.
+* Fix the entity dialog allowing special characters in the entity name.
+* Fix missing translation of special destination names.
+* Fix closing a file even if unsaved when renaming it.
+* Fix typos.
+* Sprite editor: fix adding a new direction with the plus button (#27).
+
+## Solarus Quest Editor 1.4.0 (2015-05-02)
+
+The quest editor was rewritten from scratch in C++/Qt with a lot of
+improvements and new features.
+
+### New features
+
+* Dialogs editor (by Maxs).
+* Strings editor (by Maxs).
+* Quest properties (quest.dat) editor (by Maxs).
+* French translation.
+* Add an options dialogs to configure various settings (by Maxs).
+* Add a toolbar.
+* The quest can now be run from the editor (experimental).
+* New keyboard shortcuts.
+* Map editor: multiple tiles from the tileset can now be added at once.
+* Map editor: improved the resizing of multiple entities.
+* Map editor: show information about the entity under the cursor.
+* Map editor: multiple tiles can be converted to/from dynamic tiles at once.
+* Map editor: tiles whose pattern is missing are no longer removed.
+* Tileset editor: undo/redo support.
+* Tileset editor: multi-selection support.
+* Tileset editor: showing the grid is now supported.
+* Sprite editor: undo/redo support.
+* Sprite editor: showing the grid is now supported.
+* Sprite lists now show icons representing each sprite.
+* Code editor: add a find text feature.
+* Quest tree: organize the view in columns (file name, description, type).
+* Quest tree: show resources whose file is missing on the filesystem.
+* Quest tree: show files that look like resources but are not declared yet.
+* The quest tree now automatically refreshes after changes in the filesystem.
+* Resource selectors now show a hierarchical view of elements.
+* A file to open can now be passed on the command line.
+* Show an appropriate icon in tabs.
+* Show an asterisk in the tab of files that are changed.
+* The editor has an icon now.
+* Add a menu item to open the official Solarus website.
+* Add a menu item to open Solarus documentation.
+
+### Bug fixes
+
+* Fix encoding of non-ascii characters in project_db.dat with Windows.
+* Fix Ctrl+S shortcut not always working.
+* Fix entities restored to the front when undoing removing entities.
+* Fix entities restored to the front when undoing changing their layer.
+* Fix separators resizing that could allow illegal sizes.
+* Fix jumpers size reset after undoing changing their direction.
+* Fix walls being initially traversable by everything when they are created.

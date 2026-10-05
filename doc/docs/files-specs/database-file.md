@@ -1,0 +1,120 @@
+# Quest Database File
+
+## Overview
+
+The `project_db.dat` file declares all resources (maps, musics, sprites, items, enemies, fonts, etc.) of your quest and stores other additional information about quest files. Each resource has an id and a description, and usually corresponds to one or several files.
+
+The engine needs this database file to preload or initialize some resources when the program starts. Solarus Editor needs it to provide graphical components that let the user choose a resource in a list of user-friendly names.
+
+## Syntax of the Database File
+
+Solarus Editor fully supports the edition of the quest database file `project_db.dat` You should not have to edit this file by hand unless you know what you are doing.
+
+We give here the syntax of `project_db.dat`
+
+`project_db.dat` is a text file encoded in UTF-8. The sequence of characters `--` (two dashes) marks the beginning of a comment. After them, the rest of the line is ignored. Empty lines are also ignored.
+
+### Resources
+
+There are 9 types of resources:
+
+- `map,`
+- `tileset,`
+- `sound,`
+- `music,`
+- `sprite,`
+- `item,`
+- `enemy,`
+- `language`
+- `shader`
+
+The `project_db.dat` file declares the list of such resources, with their id and their user-friendly description. The id of a resource element determines the name of the file(s) where this element is stored: for example, an enemy with id `"soldier"` will be defined in the script file `"enemies/soldier.lua"` See below for more details.
+
+The definition of each resource element starts with the name of a resource type (from the list above), followed by an opening brace, and ends with a closing brace. Inside the braces, the properties of the resource are specified. Properties are declared with the syntax `key = value` and separated with commas. It is allowed to have an extra comma after the last property. String values are enclosed within double quotes. The following properties are recognized on resources:
+
+`id` (string)
+: Id of the element. It should not contain spaces. The id determines the data file(s) of this element. The id is always a file name without extension:
+
+- For a map: the id is the name of the [map data file](./map-data-file.md) without its extension, relative to the `maps` directory. Note that the first map declared in this file will be the default map.
+- For a tileset: the id is the name of the [tileset data file](./tileset-data-file.md) without its extension, relative to the `tilesets` directory.
+- For a sound: the id is the sound file name without its extension, relative to the `sounds` directory.
+- For a music: the id is the music file name without its extension, relative to the `musics` directory.
+- For a sprite: the id is the name of the [sprite data file](./sprite-data-file.md), relative to the `sprites` directory. The sprite data file may be in a hierarchy of subdirectories. Subdirectories must be separated by a slash "/" character in the sprite id.
+
+- For an equipment item: the id is the name of the item's Lua script without its extension, relative to the `items` directory.
+
+- For an enemy model: the id is the is name of the enemy's Lua script without its extension, relative to the `enemies` directory.
+
+- For a language: the id is the name of a subdirectory of the `languages` directory.
+
+- For a font: the id is the font file name without its extension, relative to the `fonts` directory.
+
+- For a shader: the id is the [shader data file](./shader-data-file.md) without its extension, relative to the `shaders` directory.
+
+`description` (string, optional)
+: A human-readable name that describes this element. It may contain spaces. The engine does not uses this description, but Solarus Editor may use it to show to users something more user-friendly than the id.
+
+### File Authors and Licenses
+
+The quest database file can keep track of the author and license of the files in your quest. The engine does not use these properties at runtime, but they may help you keep up-to-date information about your files in a complex project.
+
+Resources described above (maps, sounds, etc.) are the core game elements recognized by the engine, but a quest is more general than that. A quest is a directory (or an archive) that contains various files and directories. Some of these files and directories correspond to resources, but there may also be a lot of files that are not resources, like additional Lua scripts or PNG files used by sprites.
+
+After the list of resources, the `project_db.dat` file gives information about individual files and directories, independently of whether they are resources or not.
+
+Files that are not resources do not have to be declared in the quest database file, but if they are, it allows to store useful information about them.
+
+Information about a file or directory start with `file{` and ends with `}` Inside the braces, the properties of the file or directory are specified. Properties are declared with the syntax `key = value` and separated with commas. It is allowed to have an extra comma after the last property. String values are enclosed within double quotes. Each file or directory declared here has the following properties:
+
+`path` (string)
+: Path of the file or directory relative to the quest `data` directory. including the file name with its extension,
+
+`author` (string, optional)
+: Author of the file.
+
+`license` (string, optional)
+: License of the file.
+
+!!! note "Note"
+
+    Information attached to a directory are considered to apply to all its files and directories except if they specify their own information as well.
+
+## Example
+
+Here is an example of a valid quest database file:
+
+```lua
+map{      id = "outside",      description = "Outside World" }
+map{      id = "hero_house",   description = "House of the hero" }
+map{      id = "shop",         description = "Shop" }
+map{      id = "dungeon_1_1f", description = "Dungeon 1 - First floor" }
+map{      id = "dungeon_1_2f", description = "Dungeon 1 - Second floor" }
+
+tileset{  id = "overworld",    description = "Overworld" }
+tileset{  id = "house",        description = "House" }
+tileset{  id = "dungeon",      description = "Dungeon" }
+
+sound{    id = "door_closed",  description = "Door closing" }
+sound{    id = "door_open",    description = "Door opening" }
+sound{    id = "enemy_hurt",   description = "Enemy hurt" }
+sound{    id = "jump",         description = "Jumping" }
+sound{    id = "treasure",     description = "Treasure" }
+
+item{     id = "sword",        description = "Sword" }
+item{     id = "bow",          description = "Bow" }
+item{     id = "arrow",        description = "Arrows (x1 / x5 / x10)" }
+
+enemy{    id = "soldier",      description = "Soldier" }
+enemy{    id = "dragon",       description = "Dragon" }
+
+language{ id = "en",           description = "English" }
+
+font{     id = "8_bit",        description = "8 bit font" }
+
+file{     path = "sprites/enemies/soldier.dat", author = "John", license = "CC BY-SA 4.0" }
+file{     path = "sprites/enemies/soldier.png", author = "John", license = "CC BY-SA 4.0" }
+file{     path = "sprites/enemies/dragon.dat",  author = "Jack", license = "CC BY-SA 4.0" }
+file{     path = "sprites/enemies/dragon.png",  author = "Jack", license = "CC BY-SA 4.0" }
+```
+
+In Solarus Editor, you can add, remove and change the id and the description of resources from the quest tree. Therefore, you probably don't need to edit this file by hand.

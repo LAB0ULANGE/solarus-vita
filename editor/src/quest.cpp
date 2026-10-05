@@ -1,0 +1,2396 @@
+/*
+ * Copyright (C) 2014-2018 Christopho, Solarus - http://www.solarus-games.org
+ *
+ * Solarus Quest Editor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Solarus Quest Editor is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "editor_settings.h"
+#include "map_model.h"
+#include "obsolete_editor_exception.h"
+#include "obsolete_quest_exception.h"
+#include "quest.h"
+#include "tileset_model.h"
+#include <QDir>
+#include <QDebug>
+#include <QFile>
+#include <QFileInfo>
+#include <QRegularExpression>
+#include <QMap>
+
+namespace SolarusEditor {
+
+namespace {
+
+/**
+ * @brief Directory name of each resource type, relative to the quest data diretory.
+ */
+const QMap<ResourceType, QString> resource_dirs = {
+  { ResourceType::MAP,      "maps"      },
+  { ResourceType::TILESET,  "tilesets"  },
+  { ResourceType::SPRITE,   "sprites"   },
+  { ResourceType::MUSIC,    "musics"    },
+  { ResourceType::SOUND,    "sounds"    },
+  { ResourceType::ITEM,     "items"     },
+  { ResourceType::ENEMY,    "enemies"   },
+  { ResourceType::ENTITY,   "entities"  },
+  { ResourceType::LANGUAGE, "languages" },
+  { ResourceType::FONT,     "fonts"     },
+  { ResourceType::SHADER,   "shaders"   },
+};
+
+}
+
+/**
+ * @brief Creates an invalid quest.
+ */
+Quest::Quest():
+  root_path(),
+  properties(*this),
+  database(*this) {
+}
+
+/**
+ * @brief Creates a quest with the specified path.
+ * @param root_path Root path of the quest.
+ */
+Quest::Quest(const QString& root_path):
+  root_path(),
+  properties(*this),
+  database(*this) {
+
+  set_root_path(root_path);
+}
+
+/**
+ * @brief Returns the path of this quest.
+ * @return The root path (above the data directory).
+ */
+QString Quest::get_root_path() const {
+  return root_path;
+}
+
+/**
+ * @brief Sets the path of this quest.
+ * @param root_path The root path (above the data directory).
+ * An empty string means an invalid quest.
+ */
+void Quest::set_root_path(const QString& root_path) {
+
+  QFileInfo file_info(root_path);
+  if (file_info.exists()) {
+    this->root_path = file_info.canonicalFilePath();
+  }
+  else {
+    this->root_path = root_path;
+  }
+
+  // Clear cached resources.
+  tilesets.clear();
+
+  emit root_path_changed(root_path);
+}
+
+/**
+ * @brief Returns whether this quest object is initialized.
+ * @return @c false if this is no quest.
+ */
+bool Quest::is_valid() const {
+  return !root_path.isEmpty();
+}
+
+/**
+ * @brief Returns whether a quest exists in the root path.
+ *
+ * A quest is considered to exist if it contains a data directory with a
+ * quest.dat file in it.
+ *
+ * @return @c true if the quest exists.
+ */
+bool Quest::exists() const {
+
+  if (!is_valid()) {
+    return false;
+  }
+
+  return exists(get_data_path() + "/quest.dat");
+}
+
+/**
+ * @brief Checks that the quest version is supported.
+ * @return @c true if the quest exists.
+ * @throw ObsoleteEditorException If the editor is too old for the quest
+ * (in this case, the user should download the latest version of the editor).
+ * @throw ObsoleteQuestException If the quest is too old for the editor
+ * (in this case, call upgrade() to upgrade quest data files automatically).
+ * @throw EditorException If another error occcurs.
+ */
+void Quest::check_version() const {
+
+  if (!is_valid()) {
+    throw EditorException(tr("No quest"));
+  }
+
+  QString quest_version = properties.get_solarus_version();
+  if (quest_version.isEmpty()) {
+      throw EditorException(tr("Missing Solarus version in quest.dat"));
+  }
+
+  int quest_major = quest_version.section('.', 0, 0).toInt();
+  int quest_minor = quest_version.section('.', 1, 1).toInt();
+
+  QString solarus_version = SOLARUS_VERSION_WITHOUT_PATCH;
+  int editor_major = solarus_version.section('.', 0, 0).toInt();
+  int editor_minor = solarus_version.section('.', 1, 1).toInt();
+
+  if (quest_major > editor_major ||
+      (quest_major == editor_major && quest_minor > editor_minor)) {
+    throw ObsoleteEditorException(quest_version);
+  }
+  else if (quest_major < editor_major ||
+           (quest_major == editor_major && quest_minor < editor_minor)) {
+    throw ObsoleteQuestException(quest_version);
+  }
+}
+
+/**
+ * @brief Returns the properties of this quest.
+ * @return The proeprties.
+ */
+const QuestProperties& Quest::get_properties() const {
+  return properties;
+}
+
+/**
+ * @brief Returns the properties of this quest.
+ * @return The proeprties.
+ */
+QuestProperties& Quest::get_properties() {
+  return properties;
+}
+
+/**
+ * @brief Returns the resources and files declared in this quest.
+ * @return The quest database.
+ */
+const QuestDatabase& Quest::get_database() const {
+  return database;
+}
+
+/**
+ * @brief Returns the resources and files declared in this quest.
+ * @return The quest database.
+ */
+QuestDatabase& Quest::get_database() {
+  return database;
+}
+
+/**
+ * @brief Returns the name of this quest.
+ *
+ * The name returned is the last component of the quest path.
+ *
+ * @return The name of the quest root directory.
+ */
+QString Quest::get_name() const {
+
+  return get_root_path().section('/', -1, -1, QString::SectionSkipEmpty);
+}
+
+/**
+ * @brief Returns the path of the data directory of this quest.
+ * @return The path to the quest data directory.
+ * Returns an empty string if the quest is invalid.
+ */
+QString Quest::get_data_path() const {
+
+  if (!is_valid()) {
+    return "";
+  }
+
+  return get_root_path() + "/data";
+}
+
+/**
+ * @brief Returns a path relative to the data directory from an absolute path.
+ * @param path The absolute path to convert.
+ * @return The path relative to the quest data directory, or an empty string
+ * if it is not in the quest data directory.
+ */
+QString Quest::get_path_relative_to_data_path(const QString& path) const {
+
+  const QString& data_path = get_data_path();
+  if (!path.startsWith(data_path)) {
+    return QString();
+  }
+
+  return path.right(path.size() - data_path.size() - 1);
+}
+
+/**
+ * @brief Returns the path of the quest properties file of this quest.
+ * @return The path to quest.dat.
+ * Returns an empty string if the quest is invalid.
+ */
+QString Quest::get_properties_path() const {
+
+  if (!is_valid()) {
+    return "";
+  }
+
+  return get_data_path() + "/quest.dat";
+}
+/**
+ * @brief Returns the path to the main.lua script of this quest.
+ * @return The path to the quest main script.
+ * Returns an empty string if the quest is invalid.
+ */
+QString Quest::get_main_script_path() const {
+
+  if (!is_valid()) {
+    return "";
+  }
+
+  return get_data_path() + "/main.lua";
+}
+
+/**
+ * @brief Returns the path to the project.dat resource file of this quest.
+ * @return The path to the resource list file.
+ * Returns an empty string if the quest is invalid.
+ */
+QString Quest::get_resource_list_path() const {
+
+  if (!is_valid()) {
+    return "";
+  }
+
+  return get_data_path() + "/project_db.dat";
+}
+
+/**
+ * @brief Returns the path to the directory of the specified resource type.
+ * @param resource_type A Solarus quest resource type.
+ * @return The path to the directory of this resource.
+ */
+QString Quest::get_resource_path(ResourceType resource_type) const {
+
+  auto it = resource_dirs.find(resource_type);
+  if (it == resource_dirs.end()) {
+    qWarning() << tr("Unknown resource type");
+    return "";
+  }
+
+  const QString& dir_name = *it;
+  return get_data_path() + '/' + dir_name;
+}
+
+/**
+ * @brief Returns the path to the main file of a resource element.
+ *
+ * For languages, the path returned is a directory.
+ *
+ * @param resource_type A Solarus quest resource type.
+ * @param element_id A resource element id.
+ * @return The path to the main file of this resource element.
+ */
+QString Quest::get_resource_element_path(ResourceType resource_type,
+                                         const QString& element_id) const {
+
+  const QStringList path_list = get_resource_element_paths(resource_type, element_id);
+  return path_list.first();
+}
+
+/**
+ * @brief Returns the paths to the files of a resource element.
+ *
+ * Indeed, some resource types have several files.
+ * For languages, only one path is returned: the language directory.
+ *
+ * @param resource_type A Solarus quest resource type.
+ * @param element_id A resource element id.
+ * @return The paths to the files of this resource element.
+ * The first element of the list is considered as the main file.
+ */
+QStringList Quest::get_resource_element_paths(ResourceType resource_type,
+                                              const QString& element_id) const {
+  QStringList paths;
+  switch (resource_type) {
+
+  case ResourceType::LANGUAGE:
+    paths << get_language_path(element_id);
+    break;
+
+  case ResourceType::MAP:
+    paths << get_map_data_file_path(element_id)
+          << get_map_script_path(element_id);
+    break;
+
+  case ResourceType::TILESET:
+    paths << get_tileset_data_file_path(element_id)
+          << get_tileset_tiles_image_path(element_id)
+          << get_tileset_entities_image_path(element_id);
+    break;
+
+  case ResourceType::SPRITE:
+    paths << get_sprite_path(element_id);
+    break;
+
+  case ResourceType::MUSIC:
+    paths << get_music_path(element_id);
+    break;
+
+  case ResourceType::SOUND:
+    paths << get_sound_path(element_id);
+    break;
+
+  case ResourceType::ITEM:
+    paths << get_item_script_path(element_id);
+    break;
+
+  case ResourceType::ENEMY:
+    paths << get_enemy_script_path(element_id);
+    break;
+
+  case ResourceType::ENTITY:
+    paths << get_entity_script_path(element_id);
+    break;
+
+  case ResourceType::FONT:
+    paths << get_font_path(element_id);
+    break;
+
+  case ResourceType::SHADER:
+    paths << get_shader_data_file_path(element_id);
+    break;
+
+  }
+
+  return paths;
+}
+
+/**
+ * @brief Returns the path to an enemy script file.
+ * @param language_id Id of an enemy.
+ * @return The path to the enemy script file.
+ */
+QString Quest::get_enemy_script_path(
+    const QString& enemy_id) const {
+
+  return get_data_path() + "/enemies/" + enemy_id + ".lua";
+}
+
+/**
+ * @brief Returns the path to a custom entity script file.
+ * @param custom_entity_id Id of an custom entity model.
+ * @return The path to the custom entity script file.
+ */
+QString Quest::get_entity_script_path(
+    const QString& custom_entity_id) const {
+
+  return get_data_path() + "/entities/" + custom_entity_id + ".lua";
+}
+
+/**
+ * @brief Returns the path to a font file.
+ *
+ * Several extensions are allowed for fonts.
+ * The first existing file with an accepted extension is returned.
+ * If no such file exists yet, the path corresponding to
+ * the preferred extension is returned.
+ *
+ * @param font_id Id of a font.
+ * @return The path to the font file.
+ */
+QString Quest::get_font_path(
+    const QString& font_id) const {
+
+  QString prefix = get_data_path() + "/fonts/" + font_id;
+  static const QStringList extensions{ ".png", ".ttf", ".otf", ".ttc", ".fon" };
+  for (const QString& extension : std::as_const(extensions)) {
+    QString path = prefix + extension;
+    if (QFileInfo::exists(path)) {
+      return path;
+    }
+  }
+  return prefix + extensions.first();
+}
+
+/**
+ * @brief Returns the path to an item script file.
+ * @param item_id Id of an item.
+ * @return The path to the item script file.
+ */
+QString Quest::get_item_script_path(
+    const QString& item_id) const {
+
+  return get_data_path() + "/items/" + item_id + ".lua";
+}
+
+/**
+ * @brief Returns the path to a language directory.
+ * @param language_id Id of a language.
+ * @return The path to the directory of this language.
+ */
+QString Quest::get_language_path(const QString& language_id) const {
+
+  return get_data_path() + "/languages/" + language_id;
+}
+
+/**
+ * @brief Returns the path to the images directory of a language.
+ * @param language_id Id of a language.
+ * @return The path to the images directory of this language.
+ */
+QString Quest::get_language_images_path(const QString& language_id) const {
+
+  return get_language_path(language_id) + "/images";
+}
+
+/**
+ * @brief Returns the path to the text directory of a language.
+ * @param language_id Id of a language.
+ * @return The path to the text directory of this language.
+ */
+QString Quest::get_language_text_path(const QString& language_id) const {
+
+  return get_language_path(language_id) + "/text";
+}
+
+/**
+ * @brief Returns the path to a map data file.
+ * @param map_id Id of a map.
+ * @return The path to the map data file.
+ */
+QString Quest::get_map_data_file_path(
+    const QString& map_id) const {
+
+  return get_data_path() + "/maps/" + map_id + ".dat";
+}
+
+/**
+ * @brief Returns the path to a map script file.
+ * @param map_id Id of a map.
+ * @return The path to the map script file.
+ */
+QString Quest::get_map_script_path(
+    const QString& map_id) const {
+
+  return get_data_path() + "/maps/" + map_id + ".lua";
+}
+
+/**
+ * @brief Returns the path to a sound file.
+ * @param sound_id Id of a sound.
+ * @return The path to the sound file.
+ */
+QString Quest::get_sound_path(
+    const QString& sound_id) const {
+
+  return get_data_path() + "/sounds/" + sound_id + ".ogg";
+}
+
+/**
+ * @brief Returns the path to a music file.
+ *
+ * Several extensions are allowed for musics.
+ * The first existing file with an accepted extension is returned.
+ * If no such file exists yet, the path corresponding to
+ * the preferred extension is returned.
+ *
+ * @param music_id Id of a music.
+ * @return The path to the music file.
+ */
+QString Quest::get_music_path(
+    const QString& music_id) const {
+
+  QString prefix = get_data_path() + "/musics/" + music_id;
+  static const QStringList extensions{ ".ogg", ".it", ".spc" };
+  for (const QString& extension : std::as_const(extensions)) {
+    QString path = prefix + extension;
+    if (QFileInfo::exists(path)) {
+      return path;
+    }
+  }
+  return prefix + extensions.first();
+}
+
+/**
+ * @brief Returns the path to a sprite sheet file.
+ * @param sprite_id Id of a sprite sheet.
+ * @return The path to the sprite sheet file.
+ */
+QString Quest::get_sprite_path(
+    const QString& sprite_id) const {
+
+  return get_data_path() + "/sprites/" + sprite_id + ".dat";
+}
+
+/**
+ * @brief Returns the path to a sprite image file.
+ * @param src_image Path of the image.
+ * @return The path to the sprite image file.
+ */
+QString Quest::get_sprite_image_path(const QString& src_image) const {
+
+  return get_data_path() + "/sprites/" + src_image;
+}
+
+/**
+ * @brief Returns a path relative to the sprites directory from an absolute path.
+ * @param path The absolute path to convert.
+ * @return The path relative to the sprites directory, or an empty string
+ * if it is not in the sprites directory.
+ */
+QString Quest::get_path_relative_to_sprites_path(const QString& path) {
+
+  const QString& sprites_path = get_resource_path(ResourceType::SPRITE);
+  if (!path.startsWith(sprites_path)) {
+    return QString();
+  }
+
+  return path.right(path.size() - sprites_path.size() - 1);
+}
+
+/**
+ * @brief Returns the path to a dialogs file.
+ * @param language_id Id of a language.
+ * @return The path to the dialogs file of this language.
+ */
+QString Quest::get_dialogs_path(
+    const QString& language_id) const {
+
+  return get_language_path(language_id) + "/text/dialogs.dat";
+}
+
+/**
+ * @brief Returns the path to a strings file.
+ * @param language_id Id of a language.
+ * @return The path to the strings file of this language.
+ */
+QString Quest::get_strings_path(
+    const QString& language_id) const {
+
+  return get_language_path(language_id) + "/text/strings.dat";
+}
+
+/**
+ * @brief Returns the path to a tileset data file.
+ * @param tileset_id Id of a tileset.
+ * @return The path to the tileset data file.
+ */
+QString Quest::get_tileset_data_file_path(
+    const QString& tileset_id) const {
+
+  return get_data_path() + "/tilesets/" + tileset_id + ".dat";
+}
+
+/**
+ * @brief Returns the path to a tileset tiles image file.
+ * @param tileset_id Id of a tileset.
+ * @return The path to the tileset tiles image file.
+ */
+QString Quest::get_tileset_tiles_image_path(
+    const QString& tileset_id) const {
+
+  return get_data_path() + "/tilesets/" + tileset_id + ".tiles.png";
+}
+
+/**
+ * @brief Returns the path to a tileset entities image file.
+ * @param tileset_id Id of a tileset.
+ * @return The path to the tileset entities image file.
+ */
+QString Quest::get_tileset_entities_image_path(
+    const QString& tileset_id) const {
+
+  return get_data_path() + "/tilesets/" + tileset_id + ".entities.png";
+}
+
+/**
+ * @brief Returns the path to a shader data file.
+ * @param shader_id Id of a shader.
+ * @return The path to the shader data file.
+ */
+QString Quest::get_shader_data_file_path(const QString& shader_id) const {
+
+  return get_data_path() + "/shaders/" + shader_id + ".dat";
+}
+
+/**
+ * @brief Returns the path to a shader GLSL file.
+ * @param glsl_file Filename relative to the \c shaders directory,
+ * including its extension.
+ * @return The path to the shader GLSL file.
+ */
+QString Quest::get_shader_code_file_path(const QString& glsl_file) const {
+
+  return get_data_path() + "/shaders/" + glsl_file;
+}
+
+/**
+ * @brief Appends a number suffix to a path until obtaining a non-existing path.
+ * @param path Path to check.
+ * @return The path possibly modified with a suffix.
+ */
+QString Quest::get_available_path(const QString& path) const {
+
+  if (!QFile(path).exists()) {
+    // Already available.
+    return path;
+  }
+
+  // Remove the extension.
+
+  QString path_without_extension = path;
+  QString extension;
+  if (path.contains('.')) {
+    extension = path.section('.', -1, -1);
+    path_without_extension = path.section('.', 0, -2);
+  }
+
+  QString path_prefix;
+  int counter = 1;
+  QStringList words = path.split('_');
+  if (words.size() == 1) {
+    path_prefix = path_without_extension;
+  } else {
+    bool is_int = false;
+    counter = words.last().toInt(&is_int);
+    if (!is_int) {
+      counter = 1;
+      path_prefix = path_without_extension;
+    } else {
+      words.removeLast();
+      path_prefix = words.join("_");
+    }
+  }
+
+  QString candidate;
+  do {
+    ++counter;
+    if (!extension.isEmpty()) {
+      candidate = QString("%1_%2.%3").arg(path_prefix).arg(counter).arg(extension);
+    } else {
+      candidate = QString("%1_%2").arg(path_prefix).arg(counter);
+    }
+  } while (QFile(candidate).exists());
+
+  return candidate;
+}
+
+/**
+ * @brief Returns whether a path is the quest properties file quest.dat.
+ * @param path The path to test.
+ * @return @c true if this is the quest properties file.
+ */
+bool Quest::is_properties_path(const QString& path) const {
+
+  return path == get_properties_path();
+}
+
+/**
+ * @brief Returns whether a path is the resource list file project_db.dat.
+ * @param path The path to test.
+ * @return @c true if this is the quest resource list file.
+ */
+bool Quest::is_resource_list_path(const QString& path) const {
+
+  return path == get_resource_list_path();
+}
+
+/**
+ * @brief Returns whether a path is a resource path.
+ * @param[in] path The path to test.
+ * @param[out] resource_type The resource type found if any.
+ * @return @c true if this is a resource path.
+ */
+bool Quest::is_resource_path(const QString& path, ResourceType& resource_type) const {
+
+  for (auto it = resource_dirs.begin(); it != resource_dirs.end(); ++it) {
+    if (path == get_resource_path(it.key())) {
+      resource_type = it.key();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * @brief Returns whether a path is under a resource path.
+ * @param[in] path The path to test.
+ * @param[out] resource_type The resource type found if any.
+ * @return @c true if this path is under a resource path, even if it does not
+ * exist yet.
+ */
+bool Quest::is_in_resource_path(const QString& path, ResourceType& resource_type) const {
+
+  for (auto it = resource_dirs.begin(); it != resource_dirs.end(); ++it) {
+    if (path.startsWith(get_resource_path(it.key()) + "/")) {
+      resource_type = it.key();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * @brief Determines if a path can be valid for a resource element like a map,
+ * a tileset, etc.
+ *
+ * Only the path string is tested: whether files actually exist does not
+ * matter.
+ *
+ * @param[in] path The path to test.
+ * @param[out] resource_type The resource type found if any.
+ * @param[out] element_id Id of the resource element if any.
+ * @return @c true if this path can be a resource element, even if it is not
+ * declared in the resource list yet.
+ */
+bool Quest::is_potential_resource_element(
+    const QString& path, ResourceType& resource_type, QString& element_id) const {
+
+  if (!is_in_resource_path(path, resource_type)) {
+    // We are not in a resource directory.
+    return false;
+  }
+
+  if (is_resource_path(path, resource_type)) {
+    // The top-level resource directory itself.
+    return false;
+  }
+
+  // We are under a resource directory. Check if a resource element with this id is declared.
+  QString resource_path = get_resource_path(resource_type);
+  QString path_from_resource = path.right(path.size() - resource_path.size() - 1);
+  QStringList extensions;
+
+  switch (resource_type) {
+  case ResourceType::MAP:
+  case ResourceType::TILESET:
+  case ResourceType::SPRITE:
+  case ResourceType::SHADER:
+    extensions << ".dat";
+    break;
+
+  case ResourceType::MUSIC:
+    extensions << ".ogg" << ".it" << ".spc";
+    break;
+
+  case ResourceType::SOUND:
+    extensions << ".ogg";
+    break;
+
+  case ResourceType::ITEM:
+  case ResourceType::ENEMY:
+  case ResourceType::ENTITY:
+    extensions << ".lua";
+    break;
+
+  case ResourceType::FONT:
+    extensions << ".png" << ".ttf" << ".otf" << ".ttc" << ".fon";
+    break;
+
+  case ResourceType::LANGUAGE:
+    // No extension.
+    break;
+  }
+
+  if (resource_type == ResourceType::LANGUAGE) {
+    element_id = path_from_resource;
+  }
+  else {
+    for (const QString& extension : std::as_const(extensions)) {
+      if (path_from_resource.endsWith(extension)) {
+        // Remove the extension.
+        element_id = path_from_resource.section('.', 0, -2);
+        break;
+      }
+    }
+  }
+
+  if (element_id.isEmpty()) {
+    // Not an recognized extension.
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @brief Determines if a path is a declared resource element like a map,
+ * a tileset, etc.
+ *
+ * Only the path string is tested: whether files actually exist does not
+ * matter.
+ *
+ * @param[in] path The path to test.
+ * @param[out] resource_type The resource type found if any.
+ * @param[out] element_id Id of the resource element if any.
+ * @return @c true if this path is a resource element declared in the resource
+ * list.
+ */
+bool Quest::is_resource_element(
+    const QString& path, ResourceType& resource_type, QString& element_id) const {
+
+  if (!is_potential_resource_element(path, resource_type, element_id)) {
+    // Not a potential resource element file.
+    return false;
+  }
+
+  if (!database.exists(resource_type, element_id)) {
+    // Valid id, but not declared in the resource list.
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @brief Returns whether a path is a directory containing at least one declared
+ * resource element.
+ *
+ * Only the path string is tested: whether files actually exist does not
+ * matter.
+ *
+ * @param[in] path The path to test.
+ * @param[out] resource_type The resource type found if any.
+ * @return @c true if this path is a directory and contains at least one
+ * declared resource element.
+ */
+bool Quest::has_resource_element(
+    const QString& path, ResourceType& resource_type) const {
+
+  if (!is_resource_path(path, resource_type) &&
+      !is_in_resource_path(path, resource_type)) {
+    // Not in a resource directory.
+    return false;
+  }
+
+  QString resource_path = get_resource_path(resource_type);
+  QString prefix = path.right(path.size() - resource_path.size());
+  if (!prefix.isEmpty() && !prefix.endsWith('/')) {
+    prefix = prefix + '/';
+  }
+
+  return get_database().exists_with_prefix(resource_type, prefix);
+}
+
+/**
+ * @brief Returns whether a path is under a resource element.
+ *
+ * Only possible for resource elements that are directories,
+ * that is, languages.
+ *
+ * @param[in] path The path to test.
+ * @param[out] resource_type The resource type found if any.
+ * @param[out] element_id Id of the parent resource element if any.
+ * @return @c true if this path is under a declared resource element,
+ * even if it does not exist yet.
+ */
+bool Quest::is_in_resource_element(
+    const QString& path, ResourceType& resource_type, QString& element_id) const {
+
+  if (!is_potential_resource_element(path, resource_type, element_id)) {
+    // Not a potential resource element file.
+    return false;
+  }
+
+  if (resource_type != ResourceType::LANGUAGE) {
+    // Only language elements have a subtree.
+    return false;
+  }
+
+  if (database.exists(resource_type, element_id)) {
+    // Already the resource element itself.
+    return false;
+  }
+
+  // Remove the last path component until we find a declared resource element.
+  while (!element_id.isEmpty()) {
+    element_id = element_id.section("/", 0, -2);
+    if (database.exists(resource_type, element_id)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * @brief Determines if a path is a map script.
+ *
+ * This function exists because the main map resource path (as recognized by
+ * is_resource_element()) is the map data file, not the map script.
+ *
+ * @param[in] path The path to test.
+ * @param[out] map_id Id of the map if it is a map script.
+ * @return @c true if this path is a map script, even if it does not exist yet.
+ */
+bool Quest::is_map_script(const QString& path, QString& map_id) const {
+
+  QString maps_path = get_resource_path(ResourceType::MAP);
+  if (!path.startsWith(maps_path + "/")) {
+    // We are not in the maps directory.
+    return false;
+  }
+
+  if (!is_script(path)) {
+    // Not a .lua file.
+    return false;
+  }
+
+  QString path_from_maps = path.right(path.size() - maps_path.size() - 1);
+
+  // Remove the extension.
+  map_id = path_from_maps.section('.', 0, -2);
+  if (!database.exists(ResourceType::MAP, map_id)) {
+    // Valid map id, but not declared in the resource list.
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @brief Determines if a path is a tileset tiles image.
+ *
+ * This function exists because the main tileset resource path
+ * (as recognized by is_resource_element())
+ * is the tileset data file, not the tileset image files.
+ *
+ * @param[in] path The path to test.
+ * @param[out] tileset_id Id of the tileset if it is a tileset tiles image.
+ * @return @c true if this path is a tileset tiles image,
+ * even if it does not exist yet.
+ */
+bool Quest::is_tileset_tiles_file(const QString& path, QString& tileset_id) const {
+
+  QString tilesets_path = get_resource_path(ResourceType::TILESET);
+  if (!path.startsWith(tilesets_path + "/")) {
+    // We are not in the tileset directory.
+    return false;
+  }
+
+  if (!path.endsWith(".tiles.png")) {
+    return false;
+  }
+
+  QString path_from_tileset = path.right(path.size() - tilesets_path.size() - 1);
+
+  // Remove the extension.
+  tileset_id = path_from_tileset.section('.', 0, -3);
+  if (!database.exists(ResourceType::TILESET, tileset_id)) {
+    // Valid tileset id, but not declared in the resource list.
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @brief Determines if a path is a tileset entities image.
+ *
+ * This function exists because the main tileset resource path
+ * (as recognized by is_resource_element())
+ * is the tileset data file, not the tileset image files.
+ *
+ * @param[in] path The path to test.
+ * @param[out] tileset_id Id of the tileset if it is a tileset entities image.
+ * @return @c true if this path is a tileset entities image,
+ * even if it does not exist yet.
+ */
+bool Quest::is_tileset_entities_file(const QString& path, QString& tileset_id) const {
+
+  QString tilesets_path = get_resource_path(ResourceType::TILESET);
+  if (!path.startsWith(tilesets_path + "/")) {
+    // We are not in the tileset directory.
+    return false;
+  }
+
+  if (!path.endsWith(".entities.png")) {
+    return false;
+  }
+
+  QString path_from_tileset = path.right(path.size() - tilesets_path.size() - 1);
+
+  // Remove the extension.
+  tileset_id = path_from_tileset.section('.', 0, -3);
+  if (!database.exists(ResourceType::TILESET, tileset_id)) {
+    // Valid tileset id, but not declared in the resource list.
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @brief Determines if a path is a language dialogs file.
+ *
+ * This function exists because the main language resource path (as recognized by
+ * is_resource_element()) is the language directory, not the dialogs file.
+ *
+ * @param[in] path The path to test.
+ * @param[out] language_id Language of the dialogs if it is a dialog file.
+ * @return @c true if this path is a dialogs file, even if it does not exist yet.
+ */
+bool Quest::is_dialogs_file(const QString& path, QString& language_id) const {
+
+  QString languages_path = get_resource_path(ResourceType::LANGUAGE);
+  if (!path.startsWith(languages_path + "/")) {
+    // We are not in the languages directory.
+    return false;
+  }
+
+  QString expected_path_end = "/text/dialogs.dat";
+  if (!path.endsWith(expected_path_end)) {
+    // Not a dialogs file.
+    return false;
+  }
+
+  QString path_from_languages = path.right(path.size() - languages_path.size() - 1);
+
+  // Remove "/text/dialogs.dat" to determine the language id.
+  language_id = path_from_languages.left(path_from_languages.size() - expected_path_end.size());
+  if (!database.exists(ResourceType::LANGUAGE, language_id)) {
+    // Language id not declared in the resource list.
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @brief Determines if a path is a language strings file.
+ *
+ * This function exists because the main language resource path (as recognized by
+ * is_resource_element()) is the language directory, not the strings file.
+ *
+ * @param[in] path The path to test.
+ * @param[out] language_id Language of the strings if it is a dialog file.
+ * @return @c true if this path is a strings file, even if it does not exist yet.
+ */
+bool Quest::is_strings_file(const QString& path, QString& language_id) const {
+
+  QString languages_path = get_resource_path(ResourceType::LANGUAGE);
+  if (!path.startsWith(languages_path + "/")) {
+    // We are not in the languages directory.
+    return false;
+  }
+
+  QString expected_path_end = "/text/strings.dat";
+  if (!path.endsWith(expected_path_end)) {
+    // Not a dialogs file.
+    return false;
+  }
+
+  QString path_from_languages = path.right(path.size() - languages_path.size() - 1);
+
+  // Remove "/text/strings.dat" to determine the language id.
+  language_id = path_from_languages.left(path_from_languages.size() - expected_path_end.size());
+  if (!database.exists(ResourceType::LANGUAGE, language_id)) {
+    // Language id not declared in the resource list.
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @brief Determines if a path if a language-specific image file.
+ * @param[in] path The path to test.
+ * @param[out] language_id Language of the image if it is a language-specific one.
+ * @return @c true if this path is a language-specific image file,
+ * even if it does not exist yet.
+ */
+bool Quest::is_language_image_file(const QString& path, QString& language_id) const {
+
+  if (!is_image(path)) {
+    // Not an image file.
+    return false;
+  }
+
+  QString languages_path = get_resource_path(ResourceType::LANGUAGE);
+  if (!path.startsWith(languages_path)) {
+    // Not under the languages directory.
+    return false;
+  }
+
+  ResourceType resource_type;
+  if (!is_in_resource_element(path, resource_type, language_id)) {
+    // Not under a language resource element.
+    return false;
+  }
+
+  if (resource_type != ResourceType::LANGUAGE) {
+    // Not under a language.
+    return false;
+  }
+
+  QString expected_prefix = QString("%1/%2/images/").arg(languages_path, language_id);
+  if (!path.startsWith(expected_prefix)) {
+    // Not in the image-specific directory of this language.
+    return false;
+  }
+  return true;
+}
+
+/**
+ * @brief Returns whether a string is a valid file name for creation.
+ *
+ * You should call this function to check the name before creating or renaming
+ * a file.
+ * Note: slashes are allowed but ".." sequences are not.
+ *
+ * @param name The name to test (assumed without a full path).
+ * @return @c true if this is a valid file name.
+ */
+bool Quest::is_valid_file_name(const QString& name) {
+
+  if (
+      name.isEmpty() ||                // The file name should not be empty.
+      name.contains('\\') ||           // The path separator should be '/'.
+      name == "." ||                   // Current directory.
+      name == ".." ||                  // Don't go up in the file hierarchy.
+      name.startsWith("../") ||
+      name.endsWith("/..") ||
+      name.endsWith("/") ||
+      name.contains("/../") ||
+      name.trimmed() != name           // The file name should not begin or
+                                       // end with whitespaces.
+      ) {
+    return false;
+  }
+
+  // This does not mean it is okay, but we have at least eliminated some
+  // nasty situations.
+  return true;
+}
+
+/**
+ * @brief Checks that a string is a valid file name for creation.
+ *
+ * You should call this function to check the name before creating or renaming
+ * a file.
+ * Note: slashes are allowed but ".." sequences are not.
+ *
+ * @param name The name to test (assumed without a full path).
+ * @throws EditorException If this is not a valid file name.
+ */
+void Quest::check_valid_file_name(const QString& name) {
+
+  if (!is_valid_file_name(name)) {
+    if (name.isEmpty()) {
+      throw EditorException(tr("Empty file name"));
+    }
+    else {
+      throw EditorException(tr("Invalid file name: '%1'").arg(name));
+    }
+  }
+}
+
+/**
+ * @brief Returns whether a path is under the quest path.
+ * @param path The path to test.
+ * @return @c true if this path is in the quest.
+ */
+bool Quest::is_in_root_path(const QString& path) const {
+
+  return path.startsWith(get_root_path());
+}
+
+/**
+ * @brief Returns whether a path is the data path.
+ * @param path The path to test.
+ * @return @c true if this path is the data path.
+ */
+bool Quest::is_data_path(const QString& path) const {
+
+  return path == get_data_path();
+}
+
+/**
+ * @brief Checks that a path is under the quest path.
+ *
+ * It is okay if such a file does not exist yet.
+ *
+ * @throws EditorException If the path is not in this quest path.
+ */
+void Quest::check_is_in_root_path(const QString& path) const {
+
+  if (!is_in_root_path(path)) {
+    throw EditorException(tr("File '%1' is not in this quest").arg(path));
+  }
+}
+
+/**
+ * @brief Returns whether a path refers to an existing file or directory
+ * of this quest.
+ * @param path The path to test.
+ * @return @c true if this path exists and is in this quest.
+ */
+bool Quest::exists(const QString& path) const {
+
+  return is_in_root_path(path) && QFileInfo::exists(path);
+}
+
+/**
+ * @brief Checks that a path refers to an existing file or directory of
+ * this quest.
+ * @throws EditorException If the path does not exist or is outside the quest.
+ */
+void Quest::check_exists(const QString& path) const {
+
+  if (!exists(path)) {
+    throw EditorException(tr("File '%1' does not exist").arg(path));
+  }
+}
+
+/**
+ * @brief Checks that no file or directory exists in a path of this quest.
+ * @throws EditorException If the path already exists or is outside the quest.
+ */
+void Quest::check_not_exists(const QString& path) const {
+
+  check_is_in_root_path(path);
+
+  if (exists(path)) {
+    throw EditorException(tr("File '%1' already exists").arg(path));
+  }
+}
+
+/**
+ * @brief Returns whether a path exists and is a directory of this quest.
+ * @param path The path to test.
+ * @return @c true if this path exists and is a directory.
+ */
+bool Quest::is_dir(const QString& path) const {
+
+  return exists(path) && QFileInfo(path).isDir();
+}
+
+/**
+ * @brief Checks that a path exists and is a directory of this quest.
+ * @throws EditorException If the path is not a directory.
+ */
+void Quest::check_is_dir(const QString& path) const {
+
+  check_exists(path);
+
+  if (!QFileInfo(path).isDir()) {
+    throw EditorException(tr("File '%1' is not a folder").arg(path));
+  }
+}
+
+/**
+ * @brief Checks that a path exists and is not a directory.
+ * @throws EditorException If the path is a directory.
+ */
+void Quest::check_not_is_dir(const QString& path) const {
+
+  check_exists(path);
+
+  if (QFileInfo(path).isDir()) {
+    throw EditorException(tr("File '%1' is a folder").arg(path));
+  }
+}
+
+/**
+ * @brief Returns whether a path of this quest corresponds to a Lua script.
+ * @param path The path to test.
+ * @return @c true if this path ends with ".lua", even if it does not exist yet.
+ */
+bool Quest::is_script(const QString& path) const {
+
+  return is_in_root_path(path) && path.endsWith(".lua");
+}
+
+/**
+ * @brief Checks that a path of this quest corresponds to a Lua script.
+ *
+ * It is okay if the script does not exist yet.
+ *
+ * @throws EditorException If the path does not end with ".lua".
+ */
+void Quest::check_is_script(const QString& path) const {
+
+  if (!is_script(path)) {
+    QString file_name(QFileInfo(path).fileName());
+    throw EditorException(tr("Wrong script name: '%1' (should end with '.lua')").arg(file_name));
+  }
+}
+
+/**
+ * @brief Returns whether a path of this quest is a shader code file.
+ * @param path The path to test.
+ * @return @c true if this path ends with ".glsl",
+ * even if it does not exist yet.
+ */
+bool Quest::is_shader_code_file(const QString& path) const {
+
+  return is_in_root_path(path) && path.endsWith(".glsl");
+}
+
+/**
+ * @brief Checks that a path of this quest corresponds to a shader code file.
+ *
+ * It is okay if the file does not exist yet.
+ *
+ * @throws EditorException If the path does not end with ".glsl".
+ */
+void Quest::check_is_shader_code_file(const QString& path) const {
+
+  if (!is_shader_code_file(path)) {
+    QString file_name(QFileInfo(path).fileName());
+    throw EditorException(tr("Wrong GLSL shader file name: '%1' (should end with '.glsl')").arg(file_name));
+  }
+}
+
+/**
+ * @brief Returns whether a path of this quest corresponds to a .dat file.
+ * @param path The path to test.
+ * @return @c true if this path ends with ".dat", even if it does not exist yet.
+ */
+bool Quest::is_data_file(const QString& path) const {
+
+  return is_in_root_path(path) && path.endsWith(".dat");
+}
+
+/**
+ * @brief Returns whether a path of this quest corresponds to a PNG image.
+ * @param path The path to test.
+ * @return @c true if this path ends with ".png", even if it does not exist yet.
+ */
+bool Quest::is_image(const QString& path) const {
+
+  return is_in_root_path(path) && path.endsWith(".png");
+}
+
+/**
+ * @brief Checks that a path of this quest corresponds to an image file.
+ *
+ * It is okay if the file does not exist yet.
+ *
+ * @throws EditorException If the path does not end with ".png".
+ */
+void Quest::check_is_image(const QString& path) const {
+
+  if (!is_image(path)) {
+    QString file_name(QFileInfo(path).fileName());
+    throw EditorException(tr("Wrong image file name: '%1' (should end with '.png')").arg(file_name));
+  }
+}
+
+/**
+ * @brief Attempts to create an empty file in this quest.
+ * @param path Path of the file to create. It must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_file(const QString& path) {
+
+  check_is_in_root_path(path);
+  check_not_exists(path);
+
+  if (!QFile(path).open(QIODevice::WriteOnly)) {
+    throw EditorException(tr("Cannot create file '%1'").arg(path));
+  }
+  emit file_created(path);
+}
+
+/**
+ * @brief Creates a file in this quest with the given content.
+ * @param path Path of the file to create. It must not exist.
+ * @param content Content of the file.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_file_from_string(
+    const QString& path,
+    const QString& content
+) {
+  check_is_in_root_path(path);
+  check_not_exists(path);
+
+  QFile file(path);
+  if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    throw EditorException(tr("Cannot write file '%1'").arg(path));
+  }
+  QTextStream out(&file);
+  out.setEncoding(QStringConverter::Utf8);
+  out << content;
+  file.close();
+
+  emit file_created(path);
+}
+
+/**
+ * @brief Attempts to create a file in this quest from a template file.
+ * @param output_file_path Path of the file to create. It must not exist.
+ * @param template_file_path Path of the template file to use.
+ * @param pattern Regular expression to replace in the template file.
+ * @param replacement Value to put instead of the pattern.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_file_from_template(
+    const QString& output_file_path,
+    const QString& template_file_path,
+    const QRegularExpression& pattern,
+    const QString& replacement
+) {
+  check_is_in_root_path(output_file_path);
+  check_not_exists(output_file_path);
+
+  QFile template_file(template_file_path);
+  if (!template_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    throw EditorException(tr("Cannot read file '%1'").arg(template_file_path));
+  }
+  QString content = QString::fromUtf8(template_file.readAll());
+  template_file.close();
+  content = content.replace(QRegularExpression(pattern), replacement);
+
+  QFile output_file(output_file_path);
+  if (!output_file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    throw EditorException(tr("Cannot write file '%1'").arg(output_file_path));
+  }
+  QTextStream out(&output_file);
+  out.setEncoding(QStringConverter::Utf8);
+  out << content;
+  output_file.close();
+
+  emit file_created(output_file_path);
+}
+
+/**
+ * @brief Attempts to create a file in this quest if it does not exist yet.
+ * @param path Path of the file to create. If it already exists, it must not
+ * be a directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_file_if_not_exists(const QString& path) {
+
+  if (exists(path)) {
+    check_not_is_dir(path);
+    return false;
+  }
+
+  create_file(path);
+  return true;
+}
+
+/**
+ * @brief Attempts to create an empty Lua script file in this quest.
+ * @param path Path of the file to create. It must end with ".lua".
+ * It must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_script(const QString& path) {
+
+  // Check that the file name ends with ".lua" and create it as an empty file.
+  check_is_script(path);
+  create_file(path);
+}
+
+/**
+ * @brief Attempts to create a Lua script in this quest if it does not exist yet.
+ * @param path Path of the file to create. It must end with ".lua".
+ * If it already exists, it must not be a directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_script_if_not_exists(const QString& path) {
+
+  if (exists(path)) {
+    check_is_script(path);
+    return false;
+  }
+
+  create_script(path);
+  return true;
+}
+
+/**
+ * @brief Attempts to create an empty GLSL shader file in this quest.
+ * @param path Path of the file to create. It must end with ".glsl".
+ * It must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_shader_code_file(const QString& path) {
+
+  // Check that the file name ends with ".lua" and create it as an empty file.
+  check_is_shader_code_file(path);
+  create_file(path);
+}
+
+/**
+ * @brief Attempts to create a GLSL shader file in this quest
+ * if it does not exist yet.
+ * @param path Path of the file to create. It must end with ".glsl".
+ * If it already exists, it must not be a directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_shader_code_file_if_not_exists(const QString& path) {
+
+  if (exists(path)) {
+    check_is_shader_code_file(path);
+    return false;
+  }
+
+  create_shader_code_file(path);
+  return true;
+}
+
+/**
+ * @brief Attempts to create a map data file in this quest.
+ * @param map_id Id of the map to create. The map data file must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_map_data_file(const QString& map_id) {
+
+  QString path = get_map_data_file_path(map_id);
+  check_is_in_root_path(path);
+  check_not_exists(path);
+  create_file(path);
+
+  // Set initial values.
+  MapModel map(*this, map_id);
+  const QStringList& tileset_ids = get_database().get_elements(ResourceType::TILESET);
+  if (!tileset_ids.isEmpty()) {
+    map.set_tileset_id(tileset_ids.first());
+  }
+  map.set_size(get_properties().get_normal_quest_size());
+  map.set_min_layer(0);
+  map.set_max_layer(2);
+  map.save();
+}
+
+/**
+ * @brief Attempts to create a map data file in this quest if it does not
+ * exist yet.
+ * @param map_id Id of the map to create.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_map_data_file_if_not_exists(const QString& map_id) {
+
+  QString path = get_map_data_file_path(map_id);
+  if (exists(path)) {
+    check_not_is_dir(path);
+    return false;
+  }
+
+  create_map_data_file(map_id);
+  return true;
+}
+
+/**
+ * @brief Attempts to create a map script file in this quest.
+ * @param map_id Id of the map to create.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_map_script(const QString& map_id) {
+
+  QString path = get_map_script_path(map_id);
+  check_is_script(path);
+
+  EditorSettings settings;
+  if (settings.get_value_bool(EditorSettings::create_scripts_with_default_code)) {
+    create_file_from_template(
+          path,
+          ":/initial_files/map_script_template.lua",
+          QRegularExpression("\\$map_id"),
+          map_id
+    );
+  } else {
+    create_file(path);
+  }
+}
+
+/**
+ * @brief Attempts to create a map script file in this quest if it does not
+ * exist yet.
+ * @param map_id Id of the map to create.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_map_script_if_not_exists(const QString& map_id) {
+
+  QString path = get_map_script_path(map_id);
+  if (exists(path)) {
+    check_not_is_dir(path);
+    return false;
+  }
+
+  create_map_script(map_id);
+  return true;
+}
+
+/**
+ * @brief Attempts to create a item script file in this quest.
+ * @param item_id Id of the item to create.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_item_script(const QString& item_id) {
+
+  QString path = get_item_script_path(item_id);
+  check_is_script(path);
+
+  EditorSettings settings;
+  if (settings.get_value_bool(EditorSettings::create_scripts_with_default_code)) {
+    create_file_from_template(
+          path,
+          ":/initial_files/item_script_template.lua",
+          QRegularExpression("\\$item_id"),
+          item_id
+    );
+  } else {
+    create_file(path);
+  }
+}
+
+/**
+ * @brief Attempts to create a item script file in this quest if it does not
+ * exist yet.
+ * @param item_id Id of the item to create.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_item_script_if_not_exists(const QString& item_id) {
+
+  QString path = get_item_script_path(item_id);
+  if (exists(path)) {
+    check_not_is_dir(path);
+    return false;
+  }
+
+  create_item_script(item_id);
+  return true;
+}
+
+/**
+ * @brief Attempts to create a enemy script file in this quest.
+ * @param enemy_id Id of the enemy to create.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_enemy_script(const QString& enemy_id) {
+
+  QString path = get_enemy_script_path(enemy_id);
+  check_is_script(path);
+
+  EditorSettings settings;
+  if (settings.get_value_bool(EditorSettings::create_scripts_with_default_code)) {
+    create_file_from_template(
+          path,
+          ":/initial_files/enemy_script_template.lua",
+          QRegularExpression("\\$enemy_id"),
+          enemy_id
+    );
+  } else {
+    create_file(path);
+  }
+}
+
+/**
+ * @brief Attempts to create a enemy script file in this quest if it does not
+ * exist yet.
+ * @param enemy_id Id of the enemy to create.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_enemy_script_if_not_exists(const QString& enemy_id) {
+
+  QString path = get_enemy_script_path(enemy_id);
+  if (exists(path)) {
+    check_not_is_dir(path);
+    return false;
+  }
+
+  create_enemy_script(enemy_id);
+  return true;
+}
+
+/**
+ * @brief Attempts to create a entity script file in this quest.
+ * @param entity_id Id of the entity to create.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_entity_script(const QString& entity_id) {
+
+  QString path = get_entity_script_path(entity_id);
+  check_is_script(path);
+
+  EditorSettings settings;
+  if (settings.get_value_bool(EditorSettings::create_scripts_with_default_code)) {
+    create_file_from_template(
+          path,
+          ":/initial_files/entity_script_template.lua",
+          QRegularExpression("\\$entity_id"),
+          entity_id
+    );
+  } else {
+    create_file(path);
+  }
+}
+
+/**
+ * @brief Attempts to create a entity script file in this quest if it does not
+ * exist yet.
+ * @param entity_id Id of the entity to create.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was created, @c false if it already existed.
+ */
+bool Quest::create_entity_script_if_not_exists(const QString& entity_id) {
+
+  QString path = get_entity_script_path(entity_id);
+  if (exists(path)) {
+    check_not_is_dir(path);
+    return false;
+  }
+
+  create_entity_script(entity_id);
+  return true;
+}
+
+/**
+ * @brief Attempts to create or update a sprite data file from a PNG image.
+ * @param image_path Path of the PNG image.
+ * @param sprite_id Id of the sprite to create.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_sprite_from_image(const QString& image_path, const QString& sprite_id) {
+
+  check_is_in_root_path(image_path);
+  check_exists(image_path);
+  const QImage image(image_path);
+  const QSize size = image.size();
+  if (size.isEmpty()) {
+    throw EditorException(tr("Cannot load image file: '%1'").arg(image_path));
+  }
+
+  SpriteModel sprite(*this, sprite_id);
+  if (sprite.rowCount() != 0) {
+    throw EditorException(tr("This sprite already exists: '%1'").arg(sprite_id));
+  }
+  const QString animation_name = "normal";
+  sprite.create_animation(animation_name);
+  const SpriteModel::Index index(animation_name, 1);
+  sprite.set_animation_source_image(index, get_path_relative_to_sprites_path(image_path));
+  sprite.add_direction(index, QRect({0, 0}, size), 1, 1);
+  sprite.save();
+}
+
+/**
+ * @brief Attempts to create a directory in this quest.
+ * @param path Path of the directory to create. It must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_dir(const QString& path) {
+
+  check_is_in_root_path(path);
+  check_not_exists(path);
+
+  QDir parent_dir(path);
+  if (!parent_dir.cdUp()) {
+    throw EditorException(tr("Cannot create folder '%1': parent folder does not exist").arg(path));
+  }
+
+  QString dir_name = QDir(path).dirName();
+  check_valid_file_name(dir_name);
+  if (!parent_dir.mkdir(dir_name)) {
+    throw EditorException(tr("Cannot create folder '%1'").arg(path));
+  }
+}
+
+/**
+ * @brief Attempts to create a directory in this quest if it does not exist
+ * yet.
+ * @param path Path of the directory to create. If it already exists, it must
+ * be a directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the directory was created, @c false if it already existed.
+ */
+bool Quest::create_dir_if_not_exists(const QString& path) {
+
+  if (exists(path)) {
+    check_is_dir(path);
+    return false;
+  }
+
+  create_dir(path);
+  return true;
+}
+
+/**
+ * @brief Attempts to create a directory in this quest.
+ * @param parent_path Path of an existing directory.
+ * @param dir_name Name of the new directory to create there. It must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::create_dir(const QString& parent_path, const QString& dir_name) {
+
+  check_valid_file_name(dir_name);
+  check_exists(parent_path);
+  check_is_dir(parent_path);
+  check_not_exists(parent_path + '/' + dir_name);
+
+  if (!QDir(parent_path).mkdir(dir_name)) {
+    throw EditorException(tr("Cannot create folder '%1'").arg(dir_name));
+  }
+}
+
+/**
+ * @brief Attempts to create a directory in this quest if it does not exist
+ * yet.
+ * @param parent_path Path of an existing directory.
+ * @param dir_name Name of the new directory to create there. If it already
+ * exists, it must be a directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the directory was created, @c false if it already existed.
+ */
+bool Quest::create_dir_if_not_exists(const QString& parent_path, const QString& dir_name) {
+
+  check_exists(parent_path);
+  check_is_dir(parent_path);
+
+  QString path = parent_path + '/' + dir_name;
+  if (exists(path)) {
+    check_is_dir(path);
+    return false;
+  }
+
+  create_dir(parent_path, dir_name);
+  return true;
+}
+
+/**
+ * @brief Creates a resource element on filesystem and in the resource list.
+ *
+ * It is okay if a file for this element already exists in the filesystem.
+ * Otherwise, it will be created if it is an editable type (map, tileset,
+ * sprite, language...).
+ * It is okay too if the resource element is already declared in the resource
+ * list.
+ * However, it is not okay if it is already present in both the filesystem and
+ * the resource list.
+ *
+ * @param resource_type A type of resource.
+ * @param element_id Id of the element to create.
+ * @param description Description of the element to create.
+ * @param data_file_info Ownership info of data file(s) to create if any.
+ * @param script_file_info Ownership info of script file(s) to create if any.
+ * @throws EditorException If an error occurred.
+ */
+void Quest::create_resource_element(ResourceType resource_type,
+                                    const QString& element_id,
+                                    const QString& description,
+                                    const QuestDatabase::FileInfo& data_file_info,
+                                    const QuestDatabase::FileInfo& script_file_info) {
+
+  Quest::check_valid_file_name(element_id);
+
+  // Make sure the top-level directory of the resource type exists.
+  create_dir_if_not_exists(get_resource_path(resource_type));
+
+  bool done_on_filesystem = false;
+
+  const QStringList& paths = get_resource_element_paths(resource_type, element_id);
+
+  switch (resource_type) {
+
+  case ResourceType::MAP:
+    // Create the map data file and the map script.
+    done_on_filesystem |= create_map_data_file_if_not_exists(element_id);
+    done_on_filesystem |= create_map_script_if_not_exists(element_id);
+    break;
+
+  case ResourceType::ITEM:
+    done_on_filesystem |= create_item_script_if_not_exists(element_id);
+    break;
+
+  case ResourceType::ENEMY:
+    done_on_filesystem |= create_enemy_script_if_not_exists(element_id);
+    break;
+
+  case ResourceType::ENTITY:
+    done_on_filesystem |= create_entity_script_if_not_exists(element_id);
+    break;
+
+  case ResourceType::SPRITE:
+  case ResourceType::SHADER:
+    // For this type of resources, files to create are simply blank text files.
+    for (const QString& path : paths) {
+      done_on_filesystem |= create_file_if_not_exists(path);
+    }
+    break;
+
+  case ResourceType::TILESET:
+    // Text file and two blank images.
+    done_on_filesystem |= create_file_if_not_exists(get_tileset_data_file_path(element_id));
+    // TODO create the two images
+    break;
+
+  case ResourceType::LANGUAGE:
+    // Directory with several files.
+    done_on_filesystem |= create_dir_if_not_exists(get_language_path(element_id));
+    done_on_filesystem |= create_dir_if_not_exists(get_language_images_path(element_id));
+    done_on_filesystem |= create_dir_if_not_exists(get_language_text_path(element_id));
+    done_on_filesystem |= create_file_if_not_exists(get_dialogs_path(element_id));
+    done_on_filesystem |= create_file_if_not_exists(get_strings_path(element_id));
+    break;
+
+  case ResourceType::MUSIC:
+  case ResourceType::SOUND:
+  case ResourceType::FONT:
+    // We don't create any file for the user in these formats.
+    break;
+
+  }
+
+  // Also declare it in the resource list.
+  bool done_in_resource_list = false;
+  if (!database.exists(resource_type, element_id)) {
+    done_in_resource_list = true;
+    database.add(resource_type, element_id, description);
+    if (!data_file_info.is_empty() || !script_file_info.is_empty()) {
+      const QStringList& abs_paths = get_resource_element_paths(resource_type, element_id);
+      for (const QString& abs_path : abs_paths) {
+        const QString& path = get_path_relative_to_data_path(abs_path);
+        if (is_script(abs_path)) {
+          database.set_file_info(path, script_file_info);
+        } else {
+          database.set_file_info(path, data_file_info);
+        }
+      }
+    }
+    database.save();
+  }
+
+  if (!done_on_filesystem && !done_in_resource_list) {
+    // Nothing was added. This must be an error.
+    throw EditorException(tr("Resource '%1' already exists").arg(element_id));
+  }
+}
+
+/**
+ * @brief Attempts to rename a file of this quest.
+ * @param old_path Path of the file to rename. It must exist.
+ * @param new_path The new path. It must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::rename_file(const QString& old_path, const QString& new_path) {
+
+  check_exists(old_path);
+  check_not_is_dir(old_path);
+  check_not_exists(new_path);
+
+  if (!QFile(old_path).rename(new_path)) {
+    throw EditorException(tr("Cannot rename file '%1'").arg(old_path));
+  }
+
+  emit file_renamed(old_path, new_path);
+
+  // Update metadata after the new file is known to others.
+  QString old_path_from_data = get_path_relative_to_data_path(old_path);
+  QString new_path_from_data = get_path_relative_to_data_path(new_path);
+  database.set_file_info(new_path_from_data, database.get_file_info(old_path_from_data));
+  database.clear_file_info(old_path_from_data);
+  database.save();
+}
+
+/**
+ * @brief Attempts to rename a file of this quest if it exists.
+ * @param old_path Path of the file to rename. If it no longer exists, then
+ * the new file must exist.
+ * @param new_path The new path. If it already exists, then the old file must
+ * no longer exist.
+ * @throws EditorException In case of error.
+ * @return @c true if the file was renamed, @c false if the renaming was
+ * already done.
+ */
+bool Quest::rename_file_if_exists(const QString& old_path, const QString& new_path) {
+
+  if (!exists(old_path)) {
+    // The old file does not exist anymore.
+    check_exists(new_path);
+    return false;
+  }
+
+  // Normal case: the old file still exists.
+  check_not_exists(new_path);
+  rename_file(old_path, new_path);
+  return true;
+}
+
+/**
+ * @brief Attempts to rename a directory of this quest.
+ *
+ * Recursively updates resource declarations and metadata of files
+ * under this directory.
+ *
+ * @param old_path Path of the file to rename. It must exist.
+ * @param new_path The new path. It must not exist.
+ * @throws EditorException In case of error.
+ */
+void Quest::rename_dir(const QString& old_path, const QString& new_path) {
+
+  check_exists(old_path);
+  check_is_dir(old_path);
+  check_not_exists(new_path);
+
+  if (!QFile(old_path).rename(new_path)) {
+    throw EditorException(tr("Cannot rename file '%1'").arg(old_path));
+  }
+  emit file_renamed(old_path, new_path);
+
+  // Update metadata of the directory itself.
+  QString old_path_from_data = get_path_relative_to_data_path(old_path);
+  QString new_path_from_data = get_path_relative_to_data_path(new_path);
+  database.set_file_info(new_path_from_data, database.get_file_info(old_path_from_data));
+  database.clear_file_info(old_path_from_data);
+  database.save();
+
+  // Check if resources are declared under the directory.
+  ResourceType old_resource_type;
+  ResourceType new_resource_type;
+  if (is_in_resource_path(old_path, old_resource_type) &&
+      is_in_resource_path(new_path, new_resource_type) &&
+      new_resource_type == old_resource_type) {
+    QStringList elements = database.get_elements(old_resource_type);
+    QString resource_path = get_resource_path(old_resource_type);
+    QString old_relative_path = old_path;
+    old_relative_path.remove(0, resource_path.size() + 1);
+    QString new_relative_path = new_path;
+    new_relative_path.remove(0, resource_path.size() + 1);
+    for (const QString& old_element_id : std::as_const(elements)) {
+      if (old_element_id.startsWith(old_relative_path + "/")) {
+        QString end = old_element_id;
+        end.remove(0, old_relative_path.size() + 1);
+        QString new_element_id = new_relative_path + "/" + end;
+        database.remove(old_resource_type, new_element_id);  // To overwrite any previous description.
+        database.rename(old_resource_type, old_element_id, new_element_id);
+      }
+    }
+  }
+
+  // Check if we have file metadata under the directory.
+  QMap<QString, QuestDatabase::FileInfo> all_file_info = database.get_all_file_info();
+  for (auto it = all_file_info.begin(); it != all_file_info.end(); ++it) {
+    const QString& old_file_path_from_data = it.key();
+    const QuestDatabase::FileInfo& info = it.value();
+    if (old_file_path_from_data.startsWith(old_path_from_data + "/")) {
+      QString end = old_file_path_from_data;
+      end.remove(0, old_path_from_data.size() + 1);
+      QString new_file_path_from_data = new_path_from_data + "/" + end;
+      database.clear_file_info(old_file_path_from_data);
+      database.set_file_info(new_file_path_from_data, info);
+    }
+  }
+
+  database.save();
+}
+
+/**
+ * @brief Renames a resource element on the filesystem and in the resource list.
+ *
+ * It is okay if the renaming is already done in the filesystem.
+ * It is okay too if the resource element has already the new id in the resource list.
+ * However, it is not okay if it is already done in both.
+ *
+ * @param resource_type A type of resource.
+ * @param old_id Id of the element to rename.
+ * @param new_id The new id to set.
+ * @throws EditorException If an error occurred.
+ */
+void Quest::rename_resource_element(
+    ResourceType resource_type, const QString& old_id, const QString& new_id) {
+
+  // Sanity checks.
+  if (new_id == old_id) {
+    throw EditorException(tr("Same source and destination id").arg(new_id));
+  }
+
+  check_valid_file_name(new_id);
+
+  if (database.exists(resource_type, old_id) &&
+      database.exists(resource_type, new_id)) {
+    throw EditorException(tr("A resource with id '%1' already exists").arg(new_id));
+  }
+
+  if (!database.exists(resource_type, old_id) &&
+      !database.exists(resource_type, new_id)) {
+    throw EditorException(tr("No such resource: '%1'").arg(old_id));
+  }
+
+  // Rename files from the filesystem.
+  bool renamed_on_filesystem = false;
+  QStringList old_paths = get_resource_element_paths(resource_type, old_id);
+  QStringList new_paths = get_resource_element_paths(resource_type, new_id);
+  for (int i = 0; i < old_paths.size(); ++i) {
+    QString old_path = old_paths.at(i);
+    QString new_path = new_paths.at(i);
+
+    // Take care of not changing the extension for musics and fonts.
+    QFileInfo old_path_info(old_path);
+    QFileInfo new_path_info(new_path);
+    QString extension = old_path_info.suffix();
+    if (new_path_info.suffix() != extension) {
+      // For example when renaming music 'temple' to 'dungeon':
+      // the old path was /some/quest/data/musics/temple.it
+      // and the new path was initialized by default with
+      // /some/quest/data/musics/dungeon.ogg
+      new_path = new_path_info.path() + '/' +
+          new_path_info.completeBaseName() + '.' + extension;
+    }
+
+    if (exists(old_path)) {
+      renamed_on_filesystem = true;
+      if (!old_path_info.isDir()) {
+        rename_file(old_path, new_path);
+      } else {
+        rename_dir(old_path, new_path);
+      }
+    }
+  }
+
+  // Also rename it in the resource list.
+  bool renamed_in_resource_list = false;
+  if (database.exists(resource_type, old_id)) {
+    renamed_in_resource_list = true;
+    database.rename(resource_type, old_id, new_id);
+    database.save();
+  }
+
+  if (!renamed_on_filesystem && !renamed_in_resource_list) {
+    // Nothing was renamed. This must be an error.
+    throw EditorException(tr("No such resource: '%1'").arg(old_id));
+  }
+}
+
+/**
+ * @brief Attempts to delete a file of this quest.
+ * @param path Path of the file to delete. It must not be a directory.
+ * @throws EditorException In case of error.
+ */
+void Quest::delete_file(const QString& path) {
+
+  check_not_is_dir(path);
+
+  if (!QFile(path).remove()) {
+    throw EditorException(tr("Cannot delete file '%1'").arg(path));
+  }
+
+  emit file_deleted(path);
+
+  // Remove metadata.
+  QString path_from_data = get_path_relative_to_data_path(path);
+  database.clear_file_info(path_from_data);
+  database.save();
+}
+
+/**
+ * @brief Attempts to delete a file of this quest if it exists.
+ * @param path Path of the file to delete. If it exists, it must not be a
+ * directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the file could be deleted, @c false if was already gone.
+ */
+bool Quest::delete_file_if_exists(const QString& path) {
+
+  if (!exists(path)) {
+    return false;
+  }
+
+  delete_file(path);
+  return true;
+}
+
+/**
+ * @brief Attempts to delete an empty directory of this quest.
+ * @param path Path of the empty directory to delete. It must be a directory.
+ * @throws EditorException In case of error.
+ */
+void Quest::delete_dir(const QString& path) {
+
+  check_is_dir(path);
+
+  QDir parent_dir(path);
+  parent_dir.cdUp();
+  if (!parent_dir.rmdir(QDir(path).dirName())) {
+    throw EditorException(tr("Cannot delete folder '%1'").arg(path));
+  }
+}
+
+/**
+ * @brief Attempts to delete an empty directory of this quest if it exists.
+ * @param path Path of the empty directory to delete. If it exists, if must
+ * be a directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the file could be deleted, @c false if was already gone.
+ */
+bool Quest::delete_dir_if_exists(const QString& path) {
+
+  if (!exists(path)) {
+    return false;
+  }
+
+  delete_dir(path);
+  return true;
+}
+
+/**
+ * @brief Attempts to delete a directory of this quest and all its content.
+ *
+ * Also removes resources and metadata under this directory.
+ *
+ * @param path Path of the directory to delete. It must be a directory.
+ * @throws EditorException In case of error.
+ */
+void Quest::delete_dir_recursive(const QString& path) {
+
+  check_is_dir(path);
+
+  QFileInfo info(path);
+  if (!info.isDir()) {
+    // Not a directory.
+    if (!QFile::remove(path)) {
+      throw EditorException(tr("Failed to delete file '%1'").arg(path));
+    }
+  }
+  else {
+    // Directory.
+    if (!QDir(path).removeRecursively()) {
+      throw EditorException(tr("Failed to delete folder '%1'").arg(path));
+    }
+  }
+
+  // Update metadata of the directory itself.
+  QString path_from_data = get_path_relative_to_data_path(path);
+  database.clear_file_info(path_from_data);
+
+  // Check if resources are declared under the directory.
+  ResourceType resource_type;
+  if (is_in_resource_path(path, resource_type)) {
+    QStringList elements = database.get_elements(resource_type);
+    QString resource_path = get_resource_path(resource_type);
+    QString relative_path = path;
+    relative_path.remove(0, resource_path.size() + 1);
+    for (const QString& element_id : std::as_const(elements)) {
+      if (element_id.startsWith(relative_path + "/")) {
+        QString end = element_id;
+        end.remove(0, relative_path.size() + 1);
+        database.remove(resource_type, element_id);  // To overwrite any previous description.
+      }
+    }
+  }
+
+  // Check if we have file metadata under the directory.
+  QMap<QString, QuestDatabase::FileInfo> all_file_info = database.get_all_file_info();
+  for (auto it = all_file_info.begin(); it != all_file_info.end(); ++it) {
+    const QString& file_path_from_data = it.key();
+    if (file_path_from_data.startsWith(path_from_data + "/")) {
+      database.clear_file_info(file_path_from_data);
+    }
+  }
+  database.save();
+}
+
+/**
+ * @brief Attempts to delete a directory of this quest and all its content if
+ * it exists.
+ * @param path Path of the directory to delete. If it exists, if must
+ * be a directory.
+ * @throws EditorException In case of error.
+ * @return @c true if the file could be deleted, @c false if was already gone.
+ */
+bool Quest::delete_dir_recursive_if_exists(const QString& path) {
+
+  if (!exists(path)) {
+    return false;
+  }
+
+  delete_dir_recursive(path);
+  return true;
+}
+
+/**
+ * @brief Deletes a resource element from the filesystem and from the resource
+ * list.
+ *
+ * It is okay its file is already removed from the filesystem.
+ * or already gone from the resource list.
+ *
+ * @param resource_type A type of resource.
+ * @param id Id of the element to remove.
+ * @throws EditorException If an error occurred.
+ */
+void Quest::delete_resource_element(
+    ResourceType resource_type, const QString& element_id) {
+
+  // Delete the file from the filesystem.
+  const QString& path = get_resource_element_path(resource_type, element_id);
+  if (is_dir(path)) {
+    delete_dir_recursive(path);
+  }
+  else if (exists(path)) {
+    delete_file(path);
+  }
+
+  // Also remove it from the resource list.
+  if (database.exists(resource_type, element_id)) {
+    database.remove(resource_type, element_id);
+    database.save();
+  }
+}
+
+/**
+ * @brief Returns the id of the music currently playing if any.
+ * @return The current music id or an empty string.
+ */
+QString Quest::get_current_music_id() const {
+  return current_music_id;
+}
+
+/**
+ * @brief Sets the music currently playing.
+ *
+ * Emits current_music_changed() if there is a change.
+ *
+ * @param music_id The current music id or an empty string.
+ */
+void Quest::set_current_music_id(const QString& music_id) {
+
+  if (music_id == this->current_music_id) {
+    return;
+  }
+
+  this->current_music_id = music_id;
+  emit current_music_changed(music_id);
+}
+
+/**
+ * @brief Returns a tileset after loading it if necessary.
+ * @param tileset_id Id of the tileset to get.
+ * @return The corresponding tileset.
+ */
+TilesetModel* Quest::get_tileset(const QString& tileset_id) const {
+
+  TilesetModel* tileset = tilesets.value(tileset_id);
+  if (tileset == nullptr) {
+    tileset = new TilesetModel(*const_cast<Quest*>(this), tileset_id, const_cast<Quest*>(this));  // TODO move to a separate class
+    tilesets.insert(tileset_id, tileset);
+  }
+  return tileset;
+}
+
+}

@@ -1,0 +1,53 @@
+{
+  "version": 6,
+  "include": ["base.json"],
+  "configurePresets": [
+    {
+      "name": "linux",
+      "displayName": "Linux",
+      "description": "Ninja project for Linux",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SOLARUS_FETCHCONTENT": true
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux",
+      "displayName": "Linux",
+      "configurePreset": "linux",
+      "description": "Release build for Linux",
+      "targets": ["solarus-launcher"],
+      "configuration": "Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    }
+  ],
+  "packagePresets": [],
+  "workflowPresets": [
+    {
+      "name": "linux",
+      "displayName": "Linux",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux"
+        },
+        {
+          "type": "build",
+          "name": "linux"
+        }
+      ]
+    }
+  ]
+}

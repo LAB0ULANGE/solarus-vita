@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) 2014-2018 Christopho, Solarus - http://www.solarus-games.org
+ *
+ * Solarus Quest Editor is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Solarus Quest Editor is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @brief AppID to report to the window system on Linux/Wayland.
+ *
+ * Also used as the macOS bundle identifier.
+ */
+#define SOLARUSEDITOR_APP_ID "${SOLARUSEDITOR_APP_ID}"
+
+/**
+ * @brief Application display name.
+ */
+#define SOLARUSEDITOR_APP_DISPLAY_NAME "${SOLARUSEDITOR_APP_DISPLAY_NAME}"
+
+/**
+ * @brief Executable name.
+ */
+#define SOLARUSEDITOR_EXECUTABLE_NAME "${SOLARUSEDITOR_EXECUTABLE_NAME}"
+
+/**
+ * @brief General application metadata.
+ */
+#define SOLARUSEDITOR_ORGANISATION "${SOLARUSEDITOR_ORGANISATION}"
+#define SOLARUSEDITOR_COPYRIGHT "${SOLARUSEDITOR_COPYRIGHT}"
+#define SOLARUSEDITOR_WEBSITE "${SOLARUSEDITOR_WEBSITE}"
+
+/**
+ * @brief Whether to disable GUI native dialogs.
+ */
+#cmakedefine01 SOLARUSEDITOR_NO_NATIVE_DIALOGS
+
+/**
+ * @brief Install paths to help find the application assets.
+ */
+#cmakedefine SOLARUSEDITOR_SOURCE_PATH "${SOLARUSEDITOR_SOURCE_PATH}"
+#cmakedefine SOLARUSEDITOR_BINDIR_PATH "${SOLARUSEDITOR_BINDIR_PATH}"
+#cmakedefine SOLARUSEDITOR_DATADIR_PATH "${SOLARUSEDITOR_DATADIR_PATH}"
+#cmakedefine SOLARUSEDITOR_ASSETS_DIR "${SOLARUSEDITOR_ASSETS_DIR}"

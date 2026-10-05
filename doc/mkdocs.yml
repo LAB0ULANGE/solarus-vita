@@ -1,0 +1,239 @@
+# Project information.
+site_name: Solarus Documentation
+site_author: Solarus Labs
+site_description: "Official documentation for the Solarus game engine: Lua API, tutorials and more."
+copyright: Copyright &copy; 2006 - 2025 Solarus Labs
+
+# Repository.
+repo_url: https://gitlab.com/solarus-games/solarus
+repo_name: solarus
+edit_uri: edit/dev/doc/docs/
+
+# Theme.
+theme:
+  name: material
+  font:
+    text: Inter
+    code: Fira Code
+  favicon: assets/images/favicon.png
+  logo: assets/images/logo.svg
+  features:
+    - search.suggest
+    - search.highlight
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs.sticky
+    - navigation.instant.progress
+extra_css:
+  - stylesheets/extra.css
+extra:
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://www.solarus-games.org
+      name: Solarus website
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.com/solarus-games
+      name: Source code on GitLab
+    - icon: fontawesome/brands/mastodon
+      link: https://mastodon.gamedev.place/@solarus
+      name: Mastodon
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/solarusgames
+      name: Twitter
+    - icon: fontawesome/brands/facebook-f
+      link: https://www.facebook.com/solarusgames
+      name: Facebook
+    - icon: fontawesome/brands/reddit
+      link: https://www.reddit.com/r/solarus
+      name: Reddit
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/yYHjJHt
+      name: Discord
+
+# Plugins
+plugins:
+  - git-revision-date-localized:
+      enable_creation_date: false
+      type: date
+  - search
+  - offline:
+      enabled: !ENV [OFFLINE, false]
+
+# Page tree
+nav:
+  - Home: index.md
+  - Tutorials:
+      - tutorials/index.md
+      - Getting started:
+          - tutorials/getting-started/index.md
+          - Installation: tutorials/getting-started/installation.md
+          - Creating a Quest: tutorials/getting-started/creating-a-quest.md
+          - Map editor: tutorials/getting-started/map-editor.md
+      - Manual:
+          - Import resources: tutorials/manual/import-resources.md
+          - Editing an existing quest: tutorials/manual/editing-an-existing-quest.md
+          - Teletransportation: tutorials/manual/teletransportation.md
+          #- Layers: tutorials/manual/layers.md
+          #- Grounds: tutorials/manual/grounds.md
+          #- Generate contours: tutorials/manual/generate-contours.md
+          #- Sprites: tutorials/manual/sprites.md
+          #- Tilesets: tutorials/manual/tilesets.md
+          #- Map scripting: tutorials/manual/map-scripting.md
+          #- Global scripts: tutorials/manual/global-scripts.md
+          #- Keyboard and joypads: tutorials/manual/keyboard-joypads.md
+          #- Treasures: tutorials/manual/treasures.md
+          #- Switches and mechanisms: tutorials/manual/switches-mechanisms.md
+          #- Timers: tutorials/manual/timers.md
+          #- Enemies: tutorials/manual/enemies.md
+          #- Separators: tutorials/manual/separators.md
+          #- Blocks: tutorials/manual/blocks.md
+          #- Sensors: tutorials/manual/sensors.md
+          #- Dynamic tiles: tutorials/manual/dynamic-tiles.md
+          #- Equipement items: tutorials/manual/equipment-items.md
+          #- Multiple heroes: tutorials/manual/multiple-heroes.md
+          #- Sound effects: tutorials/manual/soud-effects.md
+          #- Music: tutorials/manual/music.md
+          #- Menus: tutorials/manual/menus.md
+          #- HUD: tutorials/manual/hud.md
+          #- Make a subscreen: tutorials/manual/make-a-subscreen.md
+          #- Quest properties: tutorials/manual/quest-properties.md
+          - Building a Quest Package: tutorials/manual/building-quest-package.md
+          - Translate a Quest: tutorials/manual/translate-a-quest.md
+          - Choosing a License: tutorials/manual/choosing-a-license.md
+      #- Advanced:
+          #- Metatables: tutorials/advanced/metatables.md
+          #- Composables: tutorials/advanced/composables.md
+          #- User properties: tutorials/advanced/user-properties.md
+          #- Custom entities: tutorials/advanced/custom-entities.md
+          #- Map layer transitions: tutorials/advanced/map-layer-transitions.md
+          #- Spatialized sounds: tutorials/manual/spatialized-sounds.md
+          #- Surface layering: tutorials/advanced/surface-layering.md
+          #- Menu components: tutorials/advanced/menu-components.md
+          #- Shader basics: tutorials/advanced/shader-basics.md
+          #- Post-process effects: tutorials/advanced/post-process-effects.md
+          #- Debug overlay: tutorials/advanced/debug-overlay.md
+          #- External libraries: tutorials/advances/external-libraries.md
+      - Distribution:
+          - tutorials/distribution/index.md
+          #- Steam: tutorials/distribution/steam.md
+          #- Android: tutorials/distribution/android.md
+          - Nintendo Switch: tutorials/distribution/nintendo-switch.md
+      - Migration:
+          - tutorials/migration/index.md
+          - From v1.6 to v2.0: tutorials/migration/from-v1-6-to-v2-0.md
+          - From v1.5 to v1.6: tutorials/migration/from-v1-5-to-v1-6.md
+          - From v1.4 to v1.5: tutorials/migration/from-v1-4-to-v1-5.md
+          - From v1.3 to v1.4: tutorials/migration/from-v1-3-to-v1-4.md
+          - From v1.2 to v1.3: tutorials/migration/from-v1-2-to-v1-3.md
+          - From v1.1 to v1.2: tutorials/migration/from-v1-1-to-v1-2.md
+          - From v1.0 to v1.1: tutorials/migration/from-v1-0-to-v1-1.md
+  - Lua API:
+      - lua-api/index.md
+      - General Features: lua-api/general-features.md # [main] General-purpose features.
+      - Audio:
+          - lua-api/audio/index.md # [audio] Playing musics and managing sounds.
+          - Music: lua-api/audio/music.md # [music] Playing musics.
+          - Sound: lua-api/audio/sound.md # [sound] Playing sound effects.
+      - Video: lua-api/video.md # [video] Changing video settings.
+      - Shaders: lua-api/shaders.md # [shader] Modifying the rendering.
+      - Controls:
+          - lua-api/controls/index.md # [controls] Binding low-level input to game commands.
+          - Inputs: lua-api/controls/inputs.md # [input] Checking keyboard and joypad state.
+          - Joypad: lua-api/controls/joypad.md # [joypad] Handling joypads.
+      - Files: lua-api/files.md # [file] Directly accessing data files.
+      - Menus: lua-api/menus.md # [menu] Showing various information on the screen.
+      - Language Functions: lua-api/language-functions.md # [language] Handling translations.
+      - Timers: lua-api/timers.md # [timer] Making an action later with a delay.
+      - Drawable Objects:
+          - lua-api/drawable-objects/index.md # [drawable] 
+          - Surfaces: lua-api/drawable-objects/surface.md # [surface] Displaying fixed images.
+          - Text Surfaces: lua-api/drawable-objects/text-surface.md # [text_surface] Displaying text.
+          - Sprites: lua-api/drawable-objects/sprite.md # [sprite] Displaying animated images.
+      - Movements:
+          - lua-api/movements/index.md # [movement] Moving objects.
+          - Straight Movement: lua-api/movements/straight-movement.md
+          - Random Movement: lua-api/movements/random-movement.md
+          - Target Movement: lua-api/movements/target-movement.md
+          - Path Movement: lua-api/movements/path-movement.md
+          - Random Path Movement: lua-api/movements/random-path-movement.md
+          - Path Finding Movement: lua-api/movements/path-finding-movement.md
+          - Circle Movement: lua-api/movements/circle-movement.md
+          - Jump Movement: lua-api/movements/jump-movement.md
+          - Pixel Movement: lua-api/movements/pixel-movement.md
+      - Game: lua-api/game.md # [game] Handling data saved (life, equipment, etc.) and running a game.
+      - Equipment Items: lua-api/equipment-items.md # [item] Controlling a specific type of equipment item and its behavior.
+      - Map: lua-api/map.md # [map] Handling the current map and its properties (only during a game).
+      - Map Entities:
+          - lua-api/map-entities/index.md # [entity] Managing entities placed on the map (only during a game), like the hero, enemies, chests, non-playing characters, etc.
+          - Hero: lua-api/map-entities/hero.md
+          - Tile: lua-api/map-entities/tile.md
+          - Dynamic Tile: lua-api/map-entities/dynamic-tile.md
+          - Teletransporter: lua-api/map-entities/teletransporter.md
+          - Destination: lua-api/map-entities/destination.md
+          - Pickable Treasure: lua-api/map-entities/pickable.md
+          - Destructible Object: lua-api/map-entities/destructible.md
+          - Carried Object: lua-api/map-entities/carried-object.md
+          - Chest: lua-api/map-entities/chest.md
+          - Shop Treasure: lua-api/map-entities/shop-treasure.md
+          - Enemy: lua-api/map-entities/enemy.md
+          - Non-Playing Character: lua-api/map-entities/npc.md # [npc] 
+          - Block: lua-api/map-entities/block.md
+          - Jumper: lua-api/map-entities/jumper.md
+          - Switch: lua-api/map-entities/switch.md
+          - Sensor: lua-api/map-entities/sensor.md
+          - Separator: lua-api/map-entities/separator.md
+          - Wall: lua-api/map-entities/wall.md
+          - Crystal: lua-api/map-entities/crystal.md
+          - Crystal Block: lua-api/map-entities/crystal-block.md
+          - Stream: lua-api/map-entities/stream.md
+          - Door: lua-api/map-entities/door.md
+          - Stairs: lua-api/map-entities/stairs.md
+          - Bomb: lua-api/map-entities/bomb.md
+          - Explosion: lua-api/map-entities/explosion.md
+          - Fire: lua-api/map-entities/fire.md
+          - Arrow: lua-api/map-entities/arrow.md
+          - Hookshot: lua-api/map-entities/hookshot.md
+          - Boomerang: lua-api/map-entities/boomerang.md
+          - Camera: lua-api/map-entities/camera.md
+          - Custom Entity: lua-api/map-entities/custom-entity.md
+      - Custom States: lua-api/custom-states.md # [state] Customizing the behavior of the hero entity.
+  - Files Specs:
+      - files-specs/index.md
+      - Quest Properties File: files-specs/properties-file.md
+      - Quest Database File: files-specs/database-file.md
+      - Main Lua Script: files-specs/main-script.md
+      - Logos and Icons: files-specs/logos.md
+      - Audio:
+          - Sounds: files-specs/audio/sounds.md
+          - Musics: files-specs/audio/musics.md
+      - Fonts: files-specs/fonts.md
+      - Languages:
+          - files-specs/languages/index.md
+          - Translated Strings: files-specs/languages/strings.md
+          - Translated Dialogs: files-specs/languages/dialogs.md
+      - Sprite Data File: files-specs/sprite-data-file.md
+      - Map Definition File: files-specs/map-data-file.md
+      - Tileset Definition File: files-specs/tileset-data-file.md
+      - Shader Description File: files-specs/shader-data-file.md
+  - Resources:
+      - resources/index.md
+      - Scripts: resources/scripts.md
+      - Resource Packs: resources/resource-packs.md
+      - Tools:
+          - Zeal: resources/tools/zeal.md
+          - ZeroBrane: resources/tools/zerobrane.md
+
+# Extensions.
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.keys
+  - pymdownx.smartsymbols
+  - admonition
+  - pymdownx.details
+  - def_list

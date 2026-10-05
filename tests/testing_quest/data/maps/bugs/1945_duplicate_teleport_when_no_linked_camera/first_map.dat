@@ -1,0 +1,39 @@
+properties{
+  x = 0,
+  y = 0,
+  width = 640,
+  height = 480,
+  min_layer = 0,
+  max_layer = 2,
+  tileset = "castle",
+}
+
+tile{
+  layer = 0,
+  x = 0,
+  y = 0,
+  width = 640,
+  height = 480,
+  pattern = "3",
+  tileset = "castle",
+}
+
+destination{
+  name = "destination",
+  layer = 0,
+  x = 320,
+  y = 317,
+  direction = 1,
+}
+
+teletransporter{
+  name = "teleporter",
+  layer = 0,
+  x = 312,
+  y = 200,
+  width = 16,
+  height = 16,
+  destination_map = "bugs/1945_duplicate_teleport_when_no_linked_camera/second_map",
+  sprite = "entities/teleporter",
+}
+

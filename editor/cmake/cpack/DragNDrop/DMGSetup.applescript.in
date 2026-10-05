@@ -1,0 +1,75 @@
+on run argv
+  set image_name to item 1 of argv
+
+  tell application "Finder"
+    tell disk image_name
+
+      -- wait for the image to finish mounting
+      set open_attempts to 0
+      repeat while open_attempts < 4
+        try
+          open
+            delay 1
+            set open_attempts to 5
+          close
+        on error errStr number errorNumber
+          set open_attempts to open_attempts + 1
+          delay 10
+        end try
+      end repeat
+      delay 5
+
+      -- open the image the first time and save a DS_Store with just
+      -- background and icon setup
+      open
+        set current view of container window to icon view
+        set theViewOptions to the icon view options of container window
+        set background picture of theViewOptions to file ".background:background.png"
+        set arrangement of theViewOptions to not arranged
+        set icon size of theViewOptions to 128
+        delay 5
+      close
+
+      -- next setup the position of the app and Applications symlink
+      -- plus hide all the window decoration
+      open
+        tell container window
+          set sidebar width to 0
+          set statusbar visible to false
+          set toolbar visible to false
+          -- Coordinates on the screen, as { x1, y1, x2, y2 }, with
+          -- { x1, y1 }: top left.
+          -- { x2, y2 }: bottom right.
+          -- The height is the whole window height, including system title bar and
+          -- the status bar (potentially visible, if the user enabled it).
+          set the bounds to { 400, 100, 900, 490 }
+
+          -- Move hidden files/dirs out of the view, or at least not above the important items.
+          -- (In case the user shows hidden files in Finder, like us devs).
+          set position of item ".background" to { 20, 500 }
+          delay 5
+          set position of item ".VolumeIcon.icns" to { 120, 500 }
+          delay 5
+          set position of item ".fseventsd" to { 220, 500 }
+          delay 5
+
+          -- Move the important items into place.
+          set position of item "@SOLARUSEDITOR_BUNDLE_NAME@" to { 120, 180 }
+          delay 10
+          set position of item "Applications" to { 386, 180 }
+          delay 10
+
+        end tell
+        delay 5
+      close
+
+      -- one last open and close so you can see everything looks correct
+      open
+        delay 5
+      close
+
+    end tell
+  delay 1
+
+  end tell
+end run

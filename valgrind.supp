@@ -1,0 +1,44 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:*luajit*
+   fun:lua_getfield
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:*luajit*
+   fun:lua_setfield
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:*luajit*
+   fun:lua_pushlstring
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:*luajit*
+   fun:luaL_newmetatable
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:*luajit*
+   fun:lua_pushstring
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   ...
+   obj:*libSDL2*
+   fun:_ZN7Solarus6System10initializeERKNS_9ArgumentsE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_ZN7Solarus6System4quitEv
+}

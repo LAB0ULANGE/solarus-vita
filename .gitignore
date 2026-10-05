@@ -1,0 +1,58 @@
+# OS internals.
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Temporary files.
+*~
+*.swp
+tmp
+
+# Eclipse.
+.cproject
+.project
+.settings
+.csettings
+
+# Doxygen.
+developer_doc/1.*
+work/unversioned/
+
+# Build files.
+build/
+solarus-editor-build/
+
+# IDEs.
+.vscode
+CMakeLists.txt.user
+.qtcreator
+
+# MkDocs.
+/public/
+/site
+/doc/public
+/doc/site
+/dist
+mkdocs_material.egg-info
+
+# Caches and logs
+*.cpuprofile
+*.log
+*.tsbuildinfo
+.cache
+.eslintcache
+__pycache__
+
+# Python.
+__pycache__
+venv
+.venv
+
+# Other.
+tags
+
+# build files.
+/solarus-editor-build/
+/solarus-launcher-build/

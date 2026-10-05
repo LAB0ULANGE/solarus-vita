@@ -1,0 +1,27 @@
+properties{
+  x = 0,
+  y = 0,
+  width = 640,
+  height = 480,
+  min_layer = 0,
+  max_layer = 2,
+  tileset = "castle",
+}
+
+tile{
+  layer = 0,
+  x = 0,
+  y = 0,
+  width = 640,
+  height = 480,
+  pattern = "3",
+}
+
+destination{
+  name = "destination",
+  layer = 0,
+  x = 472,
+  y = 365,
+  direction = 1,
+}
+

@@ -1,0 +1,320 @@
+#------------------------------------------------------------------------------------
+# GitLab CI/CD Configuration for the Solarus Engine
+#
+# This file configures a pipeline for building, testing and packaging the
+# Solarus Engine. Packaging uses two jobs: staging-install and package.
+# Artifacts from staging-install jobs can be used in other projects that
+# depend on the Solarus Engine, e.g. the Solarus Launcher and Editor.
+#
+# There are two build targets currently supported:
+#
+# - Linux 64-bit (using gcc)
+# - Windows 64-bit (using MinGW)
+#
+# Note that only the Windows targets generate redistributable packages.
+#
+# At the moment, only Linux-based testing is available. However, Windows
+# staging-install and package jobs will not run if Linux testing fails.
+
+variables:
+  IMAGE_REPOSITORY: registry.gitlab.com/solarus-games/solarus-devops
+  IMAGE_VERSION: 20250217
+  GIT_DEPTH: 10
+  FORCE_DOCS_DEPLOY:
+    description: Set to a non-empty value to force creation of the `docs-deploy` job.
+
+stages:
+  - build-engine
+  - test
+  - install-engine
+  - build-clients
+  - package
+  - deploy
+
+#------------------------------------------------------------------------------------
+# Template for Generic Build Jobs
+#
+# An artifact is generated with the contents of the `build` directory that
+# expires one week after creation unless the pipeline is for the most recent
+# commit on a branch or tag.
+#
+# Jobs can optionally define a `CMAKE_GEN_EXTRA_FLAGS` variable with extra
+# flags to use in CMake during build system generation (default: unset).
+
+.build:
+  stage: build-engine
+  before_script:
+    - export CCACHE_BASEDIR=$CI_PROJECT_DIR
+    - export CCACHE_DIR=$CI_PROJECT_DIR/ccache
+    - export CCACHE_COMPILERCHECK=content
+    - ccache --show-stats
+  script:
+    - $CMAKE_GEN_CMD -B build $CMAKE_GEN_FLAGS
+    - $CMAKE_CMD --build build
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - build
+    expire_in: 1 week
+  cache:
+    key: $CI_JOB_NAME-$CI_COMMIT_REF_SLUG
+    paths:
+      - ccache
+  variables:
+    CMAKE_GEN_CMD: cmake
+    CMAKE_GEN_FLAGS: >-
+      -DCMAKE_STAGING_PREFIX=$CI_PROJECT_DIR/staging
+      -DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=TRUE
+      -DCMAKE_C_COMPILER_LAUNCHER=ccache
+      -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      $CMAKE_GEN_EXTRA_FLAGS
+    CMAKE_CMD: cmake
+
+#------------------------------------------------------------------------------------
+# Template for Generic Install Jobs
+#
+# An artifact is generated with the contents of the `staging` directory that
+# expires one month after creation unless the pipeline is for the most recent
+# commit on a branch or tag.
+
+.install:
+  stage: install-engine
+  script:
+    - $CMAKE_CMD --install build --strip
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - staging
+    expire_in: 1 month
+  variables:
+    CMAKE_CMD: cmake
+
+#------------------------------------------------------------------------------------
+# ENGINE - Linux Build Job (64-bit)
+
+engine-linux-build:
+  extends: .build
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+  variables:
+    CMAKE_GEN_EXTRA_FLAGS: >-
+      -DSOLARUS_TESTS_INSTALL=ON
+
+#------------------------------------------------------------------------------------
+# ENGINE - Linux without LuaJIT Build Job (64-bit)
+
+engine-linux-noluajit-build:
+  extends: .build
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+  variables:
+    CMAKE_GEN_EXTRA_FLAGS: >-
+      -DSOLARUS_TESTS_INSTALL=ON
+      -DSOLARUS_USE_LUAJIT=OFF
+
+#------------------------------------------------------------------------------------
+# ENGINE - MinGW Build Job (64-bit)
+
+engine-mingw-x64-build:
+  extends: .build
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  variables:
+    CMAKE_GEN_CMD: x86_64-w64-mingw32-cmake
+
+#------------------------------------------------------------------------------------
+# ENGINE - MinGW without LuaJIT Build Job (64-bit)
+
+engine-mingw-x64-noluajit-build:
+  extends: .build
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  variables:
+    CMAKE_GEN_CMD: x86_64-w64-mingw32-cmake
+    CMAKE_GEN_EXTRA_FLAGS: >-
+      -DSOLARUS_USE_LUAJIT=OFF
+
+#------------------------------------------------------------------------------------
+# Documentation Build Job
+#
+# An artifact is generated with the contents of the `public` and 'offline'
+# directories that expires one month after creation unless the pipeline is for the
+# most recent commit on a branch or tag.
+
+docs-build:
+  stage: build-engine
+  image: $IMAGE_REPOSITORY/docs-build-env:20250322  # will be configured in envvar later
+  script:
+    - cd doc
+    - mkdocs build --site-dir public
+    - python igen.py
+    - OFFLINE=true mkdocs build --site-dir offline
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - doc/public
+      - doc/offline
+    expire_in: 1 month
+
+#------------------------------------------------------------------------------------
+# ENGINE - Linux Test Job (64-bit)
+
+engine-linux-test:
+  stage: test
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+  dependencies:
+    - engine-linux-build
+  script:
+    - xvfb-run -a --server-args "-screen 0 640x480x24" -e /dev/stderr
+        ctest --test-dir build -V
+
+#------------------------------------------------------------------------------------
+# ENGINE - Linux Staging Install Job (64-bit)
+
+engine-linux-install:
+  extends: .install
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+  dependencies:
+    - engine-linux-build
+
+#------------------------------------------------------------------------------------
+# ENGINE - MinGW Staging Install Job (64-bit)
+
+engine-mingw-x64-install:
+  extends: .install
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  dependencies:
+    - engine-mingw-x64-build
+
+#------------------------------------------------------------------------------------
+# EDITOR - Linux Build Job (64-bit)
+
+editor-linux-build:
+  before_script:
+    - cd editor
+  extends: .build
+  stage: build-clients
+  artifacts:
+    paths:
+      - editor/build
+  dependencies:
+    - engine-linux-install
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+
+#------------------------------------------------------------------------------------
+# EDITOR - MinGW Build Job (64-bit)
+
+editor-mingw-x64-build:
+  before_script:
+    - cd editor
+  extends: .build
+  stage: build-clients
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  dependencies:
+    - engine-mingw-x64-install
+  variables:
+    CMAKE_GEN_CMD: x86_64-w64-mingw32-cmake  
+
+#------------------------------------------------------------------------------------
+# LAUNCHER - Linux Build Job (64-bit)
+
+launcher-linux-build:
+  before_script:
+    - cd launcher
+  extends: .build
+  stage: build-clients
+  artifacts:
+    paths:
+      - launcher/build
+  dependencies:
+    - engine-linux-install
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+
+#------------------------------------------------------------------------------------
+# LAUNCHER - MinGW Build Job (64-bit)
+
+launcher-mingw-x64-build:
+  before_script:
+    - cd launcher
+  extends: .build
+  stage: build-clients
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  dependencies:
+    - engine-mingw-x64-install
+  variables:
+    CMAKE_GEN_CMD: x86_64-w64-mingw32-cmake 
+
+#------------------------------------------------------------------------------------
+# MinGW Package Job (64-bit)
+#
+# An artifact is generated with binaries, libraries and assets required to
+# run the Solarus Engine that expires one month after creation unless the
+# pipeline is for the most recent commit on a branch or tag.
+#
+# The generated packages are named `<package-prefix>-<commit-hash>.zip` for
+# non-releases (based on commits) or `<package-prefix>-<tag-name>.zip` for
+# releases (based on tags). Text files are newline-converted for Windows.
+
+engine-mingw-x64-package:
+  stage: package
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  dependencies:
+    - engine-mingw-x64-install
+  before_script:
+    - PACKAGE_REF=${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}
+    - PACKAGE=$PACKAGE_NAME-$PACKAGE_REF-$PACKAGE_PLATFORM-$PACKAGE_ARCH.zip
+    - 'echo "Package: $PACKAGE"'
+  script:
+    - mingw_make_pkg.sh $ARCH $PACKAGE $BASE_DIR $BINARIES
+    - if [[ -n $EXTRAS ]]; then pkg_add.sh $PACKAGE $BASE_DIR $EXTRAS; fi
+    - if [[ -n $TEXT_FILES ]]; then
+        unix2dos -k -o $TEXT_FILES;
+        pkg_add.sh $PACKAGE . $TEXT_FILES;
+      fi
+    # START-HOTFIX: ensure that the LuaJIT library is used in the package
+    - cp /usr/$ARCH-w64-mingw32/bin/luajit-2.1.dll lua51.dll
+    - pkg_add.sh $PACKAGE $BASE_DIR lua51.dll
+    # END-HOTFIX: will be properly fixed in mingw_make_pkg.sh later
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - $PACKAGE_NAME-*-$PACKAGE_PLATFORM-$PACKAGE_ARCH.zip
+    expire_in: 1 month
+  variables:
+    ARCH: x86_64
+    BASE_DIR: solarus
+    PACKAGE_NAME: solarus-cli
+    PACKAGE_PLATFORM: windows
+    PACKAGE_ARCH: x64
+    BINARIES: >-
+      staging/bin/libsolarus.dll
+      staging/bin/solarus-run.exe
+    EXTRAS: >-
+      staging/share/solarus/gamecontrollerdb.txt
+    TEXT_FILES: >-
+      changelog.md
+      license
+      license-details.md
+
+#------------------------------------------------------------------------------------
+# Documentation Deploy Job
+#
+# The documentation is built using MkDocs and deployed to GitLab Pages.
+# The deployment will be done automatically by GitLab Pages (enabled in the
+# project settings), and only for the default branch (currently 'dev').
+#
+# The built documentation website will be available in the following URLs:
+#
+#   https://solarus-games.gitlab.io/solarus
+#   https://docs.solarus-games.org (mirror)
+
+docs-deploy:
+  stage: deploy
+  image: $IMAGE_REPOSITORY/utilities-env:$IMAGE_VERSION
+  dependencies:
+    - docs-build
+  script:
+    - 'true'  # no script action is necessary for this job
+  pages:
+    publish: doc/public
+  variables:
+    GIT_STRATEGY: none  # no repository content is needed
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $FORCE_DOCS_DEPLOY

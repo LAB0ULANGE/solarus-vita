@@ -1,0 +1,91 @@
+List of mandatory data files whose name is currently hardcoded in the engine
+----------------------------------------------------------------------------
+
+project_db.dat
+quest.dat
+enemies/
+items/
+maps/
+tilesets/
+musics/
+languages/
+  languages.dat
+  XX/
+    text/
+      strings.dat
+      dialogs.dat
+    images/
+sounds/
+  arrow_hit.ogg
+  boomerang.ogg
+  boss_hurt.ogg
+  boss_killed.ogg
+  bow.ogg
+  cane.ogg
+  chest_open.ogg
+  door_closed.ogg
+  door_open.ogg
+  door_unlocked.ogg
+  enemy_hurt.ogg
+  enemy_killed.ogg
+  explosion.ogg
+  hero_falls.ogg
+  hero_hurt.ogg
+  hero_lands.ogg
+  hero_pushes.ogg
+  hookshot.ogg
+  jump.ogg
+  lift.ogg
+  message_end.ogg
+  monster_hurt.ogg
+  picked_item.ogg
+  running.ogg
+  running_obstacle.ogg
+  shield.ogg
+  splash.ogg
+  stairs_down_start.ogg
+  stairs_down_end.ogg
+  stairs_up_start.ogg
+  stairs_up_end.ogg
+  stone.ogg
+  swim.ogg
+  sword1.ogg ...
+  sword_spin_attack_load.ogg
+  sword_spin_attack_release.ogg
+  sword_tapping.ogg
+  sword_tapping_weak_wall.ogg
+  throw.ogg
+  timer.ogg
+  timer_hurry.ogg
+  treasure.ogg
+  victory.ogg
+  walk_on_grass.ogg
+  walk_on_water.ogg
+  wrong.ogg
+sprites/
+  entities/
+    arrow.dat
+    block.dat
+    bomb.dat
+    chest.dat
+    crystal.dat
+    crystal_block.dat
+    explosion.dat
+    fire.dat
+    hookshot.dat
+    items.dat
+    miscellaneous.png
+    rupee_icon.dat
+    shadow.dat
+    star.dat
+  hero/
+    tunic1.dat ...
+    sword1.dat ...
+    sword_stars1.dat ...
+    shield1.dat ...
+    ground1.dat
+    ground2.dat
+    trail.dat
+  enemies/
+    enemy_killed.dat
+

@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>app_icon/solarus-editor-16.png</file>
+        <file>app_icon/solarus-editor-20.png</file>
+        <file>app_icon/solarus-editor-24.png</file>
+        <file>app_icon/solarus-editor-32.png</file>
+        <file>app_icon/solarus-editor-40.png</file>
+        <file>app_icon/solarus-editor-48.png</file>
+        <file>app_icon/solarus-editor-64.png</file>
+        <file>app_icon/solarus-editor-96.png</file>
+        <file>app_icon/solarus-editor-128.png</file>
+        <file>app_icon/solarus-editor-256.png</file>
+        <file>app_icon/solarus-editor-512.png</file>
+        <file>app_icon/solarus-editor-1024.png</file>
+    </qresource>
+</RCC>

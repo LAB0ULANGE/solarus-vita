@@ -1,0 +1,47 @@
+# OS files.
+*~
+*.swp
+.DS_Store
+desktop.ini
+~`~*
+
+# VS Code files.
+.cproject
+.project
+.settings
+.csettings
+.vscode/
+.qt_for_python/
+
+# Qt Creator files.
+CMakeLists.txt.user
+*creator.user*
+*.qml.autosave
+debug.log
+
+# Build files.
+build/
+_build/
+*.d
+*.slo
+*.lo
+*.o
+*.obj
+*.a
+*.lib
+*.qm
+*.gch
+*.pch
+*.so
+*.dylib
+*.dll
+
+# Temporary files.
+tmp/
+tmp.sh
+
+# Solarus files.
+error.txt
+
+# CMake.
+CMakeUserPresets.json

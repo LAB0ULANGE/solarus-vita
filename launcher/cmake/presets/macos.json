@@ -1,0 +1,130 @@
+{
+  "version": 6,
+  "include": ["base.json"],
+  "configurePresets": [
+    {
+      "name": "macos",
+      "displayName": "macOS",
+      "description": "Ninja project for macOS",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "Qt6_DIR": "/opt/homebrew/opt/qt/lib/cmake/Qt6",
+        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/qt",
+        "SOLARUS_FETCHCONTENT": true
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-signed",
+      "inherits": "macos",
+      "displayName": "Signed macOS",
+      "description": "Ninja project for a signed+notarized macOS bundle",
+      "cacheVariables": {
+        "SOLARUSLAUNCHER_DEPLOY_ENABLED": true,
+        "SOLARUSLAUNCHER_CODESIGN_ENABLED": true,
+        "SOLARUSLAUNCHER_NOTARIZE_ENABLED": true,
+        "SOLARUSLAUNCHER_CPACK_PRETTY_DMG_ENABLED": true
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "macos",
+      "displayName": "macOS",
+      "configurePreset": "macos",
+      "description": "Release build with Ninja for macOS",
+      "targets": ["solarus-launcher"],
+      "configuration": "Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-signed",
+      "inherits": "macos",
+      "displayName": "Signed macOS",
+      "description": "Release build with Ninja for signed+notarized macOS",
+      "configurePreset": "macos-signed"
+    },
+    {
+      "name": "macos-i18n",
+      "displayName": "Update translations",
+      "configurePreset": "macos",
+      "description": "Update .ts files (Qt translations)",
+      "targets": ["update_translations"],
+      "configuration": "Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "macos",
+      "displayName": "macOS",
+      "configurePreset": "macos",
+      "description": "DMG packaging for macOS bundle",
+      "generators": ["DragNDrop"],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-signed",
+      "inherits": "macos",
+      "displayName": "Signed macOS",
+      "configurePreset": "macos-signed",
+      "description": "DMG packaging for signed+notarized macOS bundle"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "macos",
+      "displayName": "macOS",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "macos"
+        },
+        {
+          "type": "build",
+          "name": "macos"
+        },
+        {
+          "type": "package",
+          "name": "macos"
+        }
+      ]
+    },
+    {
+      "name": "macos-signed",
+      "displayName": "Signed macOS",
+      "description": "Bundling+signing+notarizing+packaging for macOS",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "macos-signed"
+        },
+        {
+          "type": "build",
+          "name": "macos-signed"
+        },
+        {
+          "type": "package",
+          "name": "macos-signed"
+        }
+      ]
+    }
+  ]
+}

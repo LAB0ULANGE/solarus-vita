@@ -1,0 +1,39 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="32" height="32" fill="lightgrey"/>
+<rect width="32" height="32" fill="white" fill-opacity="0.04"/>
+<rect width="32" height="32" fill="black" fill-opacity="0.1"/>
+<rect y="16" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="16" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="16" y="16" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect y="24" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect y="8" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="16" y="8" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="16" y="24" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="4" y="20" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="4" y="4" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="20" y="4" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="20" y="20" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="4" y="28" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="4" y="12" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="20" y="12" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="20" y="28" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="8" y="16" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="8" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="24" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="24" y="16" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="8" y="24" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="8" y="8" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="24" y="8" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="24" y="24" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="12" y="20" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="12" y="4" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="28" y="4" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="28" y="20" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="12" y="28" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="12" y="12" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="28" y="12" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<rect x="28" y="28" width="4" height="4" fill="black" fill-opacity="0.2"/>
+<path d="M0 0V32H8V8H32V0H0Z" fill="#009688"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 8H32V0H0V32H8V8ZM7 31V7H31V1H1V31H7Z" fill="#00796B"/>
+</svg>

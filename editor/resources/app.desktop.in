@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=@SOLARUSEDITOR_APP_DISPLAY_NAME@
+GenericName=Integrated development environment for Solarus
+GenericName[es]=Entorno de desarrollo integrado para Solarus
+GenericName[fr]=Environnement de développement intégré pour Solarus
+Comment=A graphical user interface to create and modify video games for the Solarus engine.
+Comment[es]=Una interfaz gráfica para crear y modificar videojuegos para el motor Solarus.
+Comment[fr]=Une interface graphique pour créer et modifier des jeux vidéos pour le moteur Solarus.
+Exec=@SOLARUSEDITOR_EXECUTABLE_NAME@
+Terminal=false
+Type=Application
+Icon=@SOLARUSEDITOR_APP_ID@
+Categories=Development;IDE;
+StartupNotify=true

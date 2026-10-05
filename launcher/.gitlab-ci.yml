@@ -1,0 +1,260 @@
+#------------------------------------------------------------------------------------
+# GitLab CI/CD Configuration for the Solarus Launcher
+#
+# This file configures a pipeline for building and packaging the Solarus Launcher.
+# An initial prepare stage is used to download build and package
+# dependencies. Packaging uses two jobs: staging-install and package.
+#
+# There are three build targets currently supported:
+#
+# - Linux 64-bit (using gcc)
+# - macOS (using Xcode)
+# - Windows 64-bit (using MinGW)
+#
+# Note that only the Windows targets generate redistributable packages.
+
+variables:
+  IMAGE_REPOSITORY: registry.gitlab.com/solarus-games/solarus-devops
+  IMAGE_VERSION: 20250217
+  GIT_DEPTH: 1
+
+stages:
+  - prepare
+  - build
+  - install
+  - package
+
+#------------------------------------------------------------------------------------
+# Template for Generic Prepare Jobs
+#
+# An artifact is generated with the contents of the `staging` directory from
+# a Solarus engine install job that expires one week after creation unless the
+# pipeline is for the most recent commit on a branch or tag.
+#
+# Jobs must define a `SOLARUS_JOB` variable with the name of the Solarus
+# Engine CI/CD install job from which to download the artifact from.
+# For releases (based on tags), the same tag name will be used for the Solarus
+# Engine install job artifact download, otherwise `dev` will be used. Jobs can
+# optionally define a `SOLARUS_REF` variable with a specific Git ref to use
+# when downloading the install job artifact.
+
+.prepare:
+  image: $IMAGE_REPOSITORY/utilities-env:$IMAGE_VERSION
+  stage: prepare
+  before_script:
+    - |
+      if [[ -z $SOLARUS_REF ]]; then
+        case $CI_COMMIT_REF_NAME in
+          release-*) SOLARUS_REF=$CI_COMMIT_REF_NAME ;;
+          *) SOLARUS_REF=${CI_COMMIT_TAG:-dev} ;;
+        esac
+      fi
+    - SOLARUS_ARTIFACTS=$SOLARUS_REPOSITORY/-/jobs/artifacts/$SOLARUS_REF
+    - SOLARUS_JOB_ARTIFACT=$SOLARUS_ARTIFACTS/download?job=$SOLARUS_JOB
+    - 'echo "Artifact: $SOLARUS_JOB_ARTIFACT"'
+  script:
+    - TMP_FILE=$(mktemp)
+    - wget -O $TMP_FILE $SOLARUS_JOB_ARTIFACT
+    - 7za x $TMP_FILE
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - staging
+    expire_in: 1 week
+  variables:
+    GIT_STRATEGY: none  # no repository content is needed
+    SOLARUS_REPOSITORY: https://gitlab.com/solarus-games/solarus
+
+#------------------------------------------------------------------------------------
+# Template for Generic Build Jobs
+#
+# An artifact is generated with the contents of the `build` directory that
+# expires one week after creation unless the pipeline is for the most recent
+# commit on a branch or tag.
+#
+# Jobs can optionally define a `CMAKE_GEN_EXTRA_FLAGS` variable with extra
+# flags to use in CMake during build system generation (default: unset).
+
+.build:
+  stage: build
+  before_script:
+    - export CCACHE_BASEDIR=$CI_PROJECT_DIR
+    - export CCACHE_DIR=$CI_PROJECT_DIR/ccache
+    - export CCACHE_COMPILERCHECK=content
+    - ccache --show-stats
+  script:
+    - $CMAKE_GEN_CMD -B build $CMAKE_GEN_FLAGS
+    - $CMAKE_CMD --build build
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - build
+    expire_in: 1 week
+  cache:
+    key: $CI_JOB_NAME-$CI_COMMIT_REF_SLUG
+    paths:
+      - ccache
+  variables:
+    CMAKE_GEN_CMD: cmake
+    CMAKE_GEN_FLAGS: >-
+      -DCMAKE_STAGING_PREFIX=$CI_PROJECT_DIR/staging
+      -DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=TRUE
+      -DCMAKE_C_COMPILER_LAUNCHER=ccache
+      -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      $CMAKE_GEN_EXTRA_FLAGS
+    CMAKE_CMD: cmake
+
+#------------------------------------------------------------------------------------
+# Template for Generic Install Jobs
+#
+# An artifact is generated with the contents of the `staging` directory that
+# expires one month after creation unless the pipeline is for the most recent
+# commit on a branch or tag.
+
+.install:
+  stage: install
+  script:
+    - $CMAKE_CMD --install build --strip
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - staging
+    expire_in: 1 month
+  variables:
+    CMAKE_CMD: cmake
+
+#------------------------------------------------------------------------------------
+# Linux Prepare Job (64-bit)
+
+linux-prepare:
+  extends: .prepare
+  variables:
+    SOLARUS_JOB: linux-install
+
+#------------------------------------------------------------------------------------
+# MinGW Prepare Job (64-bit)
+
+mingw-x64-prepare:
+  extends: .prepare
+  variables:
+    SOLARUS_JOB: mingw-x64-install
+
+#------------------------------------------------------------------------------------
+# Linux Build Job (64-bit)
+
+linux-build:
+  extends: .build
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+  dependencies:
+    - linux-prepare
+
+#------------------------------------------------------------------------------------
+# macOS Build Job
+
+macos-build:
+  stage: build
+  image: macos-15-xcode-16
+  tags:
+    - saas-macos-medium-m1
+  before_script:
+    - echo "started by ${GITLAB_USER_NAME} / @${GITLAB_USER_LOGIN}"
+    - brew update
+    - brew install
+        coreutils
+        cmake
+        ninja
+        pkg-config
+        sdl2
+        sdl2_image
+        sdl2_ttf
+        luajit
+        libvorbis
+        libmodplug
+        physfs
+        glm
+        openal-soft
+        qt@6
+  script:
+    - cmake --preset macos
+    - cmake --build --preset macos
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - build
+    expire_in: 1 week
+
+#------------------------------------------------------------------------------------
+# MinGW Build Job (64-bit)
+
+mingw-x64-build:
+  extends: .build
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  dependencies:
+    - mingw-x64-prepare
+  variables:
+    CMAKE_GEN_CMD: x86_64-w64-mingw32-cmake
+    CMAKE_GEN_EXTRA_FLAGS: >-
+      -DENABLE_QTDEPLOY=OFF
+
+#------------------------------------------------------------------------------------
+# MinGW Staging Install Job (64-bit)
+
+mingw-x64-install:
+  extends: .install
+  image: $IMAGE_REPOSITORY/linux-build-env:$IMAGE_VERSION
+  dependencies:
+    - mingw-x64-prepare
+    - mingw-x64-build
+
+#------------------------------------------------------------------------------------
+# MinGW Package Job (64-bit)
+#
+# An artifact is generated with binaries, libraries and assets required to
+# run the Solarus Launcher that expires one month after creation unless
+# the pipeline is for the most recent commit on a branch or tag.
+#
+# The generated packages are named `<package-prefix>-<commit-hash>.zip` for
+# non-releases (based on commits) or `<package-prefix>-<tag-name>.zip` for
+# releases (based on tags). Text files are newline-converted for Windows.
+
+mingw-x64-package:
+  stage: package
+  image: $IMAGE_REPOSITORY/mingw-build-env:$IMAGE_VERSION
+  dependencies:
+    - mingw-x64-install
+  before_script:
+    - PACKAGE_REF=${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}
+    - PACKAGE=$PACKAGE_PREFIX-$PACKAGE_REF.zip
+    - 'echo "Package: $PACKAGE"'
+  script:
+    - mingw_make_pkg.sh $ARCH $PACKAGE $BASE_DIR $BINARIES
+    - if [[ -n $EXTRAS ]]; then pkg_add.sh $PACKAGE $BASE_DIR $EXTRAS; fi
+    - if [[ -n $TEXT_FILES ]]; then
+        unix2dos -k -o $TEXT_FILES;
+        pkg_add.sh $PACKAGE . $TEXT_FILES;
+      fi
+    # START-HOTFIX: ensure that the LuaJIT library is used in the package
+    - cp /usr/$ARCH-w64-mingw32/bin/luajit-2.1.dll lua51.dll
+    - pkg_add.sh $PACKAGE $BASE_DIR lua51.dll
+    # END-HOTFIX: will be properly fixed in mingw_make_pkg.sh later
+  artifacts:
+    name: $CI_JOB_NAME
+    paths:
+      - $PACKAGE_PREFIX-*.zip
+    expire_in: 1 month
+  variables:
+    ARCH: x86_64
+    BASE_DIR: solarus
+    PACKAGE_PREFIX: solarus-launcher-x64
+    BINARIES: >-
+      staging/bin/libsolarus.dll
+      staging/bin/solarus-launcher.exe
+    EXTRAS: >-
+      staging/share/solarus/gamecontrollerdb.txt
+      /usr/$ARCH-w64-mingw32/lib/qt6/plugins/iconengines
+      /usr/$ARCH-w64-mingw32/lib/qt6/plugins/imageformats
+      /usr/$ARCH-w64-mingw32/lib/qt6/plugins/platforms
+      /usr/$ARCH-w64-mingw32/lib/qt6/plugins/styles
+    TEXT_FILES: >-
+      CHANGELOG.md
+      LICENSE

@@ -1,0 +1,71 @@
+{
+  "version": 6,
+  "include": ["base.json"],
+  "configurePresets": [
+    {
+      "name": "msys2",
+      "displayName": "MSYS2 (Windows)",
+      "description": "MSYS2 for Windows",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SOLARUS_FETCHCONTENT": true,
+        "SOLARUS_DIR": "C:/msys64/ucrt64/include/solarus/"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "msys2",
+      "displayName": "MSYS2 (Windows)",
+      "configurePreset": "msys2",
+      "description": "Release build for Windows with MSYS2 and Ninja",
+      "targets": ["solarus-launcher"],
+      "configuration": "Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "msys2",
+      "displayName": "MSYS2 (Windows)",
+      "configurePreset": "msys2",
+      "description": "NSIS packaging for Windows with MSYS2 and Ninha",
+      "generators": ["NSIS"],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "msys2",
+      "displayName": "MSYS2 (Windows)",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msys2"
+        },
+        {
+          "type": "build",
+          "name": "msys2"
+        },
+        {
+          "type": "package",
+          "name": "msys2"
+        }
+      ]
+    }
+  ]
+}

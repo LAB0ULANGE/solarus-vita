@@ -1,0 +1,244 @@
+:root > * {
+  /* Page background */
+  --md-default-bg-color: #1f1345;
+  --md-default-fg-color: #b7a7e2;
+  --md-default-fg-color--lightest: #150c30; /* Metadata background in search popup */
+
+  /* Accents */
+  --md-accent-fg-color: #ffab00; /* Brand color */
+  --md-accent-fg-color--transparent: #ffab0000; /* Brand color (transparent) */
+  --md-accent-bg-color: #19103b;
+  --md-accent-fg-color--transparent: #2e1b66; /* Selected items in search popup */
+
+  /* Title bar */
+  --md-primary-fg-color: #4a2c94; /* Background */
+  --md-primary-bg-color: #ffffff; /* Text */
+
+  /* Table of content */
+  --md-primary-fg-color--dark: #2e1b66; /* Links passed (not to be confused with ALTTP lol)*/
+  --md-primary-bg-color--light: #8a73cc; /* Next links */
+
+  /* Body */
+  --md-typeset-color: var(--md-default-fg-color); /* Regular text */
+  --md-typeset-a-color: var(--md-accent-fg-color); /* Links */
+  --md-typeset-mark-color: #4a2c94; /* HTML <mark> tags */
+
+  /* Code blocks */
+  --md-code-bg-color: #140b2f;
+  --md-code-fg-color: #c68beb; /* Code inside paragraphs */
+  --md-code-hl-name-color: #a78bf3; /* Code inside code blocks */
+  --md-code-hl-variable-color: #ffffff;
+  --md-code-hl-comment-color:  #5959be;
+  --md-code-hl-string-color: #ef9234;
+  --md-code-hl-keyword-color: #ea6870;
+  --md-code-hl-function-color: #4faaff;
+  --md-code-hl-operator-color: #ffffff;
+  --md-code-hl-punctuation-color: #ffffff;
+  --md-code-hl-number-color: #ea92c5;
+  --md-code-hl-special-color: #ffab00;
+
+  /* Footer */
+  --md-footer-bg-color: #160d31; /* Background for top part */
+  --md-footer-bg-color--dark: #100925; /* Background for bottom part */
+  --md-footer-fg-color: #d9d1ef; /* Previous and Next buttons text */
+  --md-footer-fg-color--light: #8a73cc; /* Links */
+  --md-footer-fg-color--lighter: #584394; /* Regular text */
+
+  /* ??? */
+  /* --md-default-fg-color: #b7a7e2; */
+  --md-default-fg-color--light: #8a73cc; /* Blockquotes */
+  --md-default-fg-color--lighter: #584394; /* Blockquotes border */
+
+  /* Keyboard shortcuts */
+  --md-typeset-kbd-color: #876dd4;
+  --md-typeset-kbd-accent-color: #6d50c6;
+  --md-typeset-kbd-border-color: #4a2c94;
+
+  /* Tables */
+  --md-typeset-table-color: #4a2c94; /* Table border */
+
+  /* Admonitions */
+  --md-admonition-fg-color: var(--md-default-fg-color);
+  --md-admonition-bg-color: #160c33;
+
+  /* Custom variables */
+  --search-border-radius: 0.4em;
+}
+
+html {
+  font-size: 120%;
+}
+
+/* Override kbd foreground color */
+:root .md-typeset kbd {
+  color: #2e1b66;
+  font-weight: bold;
+}
+
+:root .admonition,
+:root details {
+  font-size: 0.9em;
+}
+
+/* Override titles color */
+:root h1,
+:root h2,
+:root h3,
+:root h4,
+:root h5,
+:root h6 {
+  color: #ffffff;
+}
+
+:root h1 code,
+:root h2 code,
+:root h3 code,
+:root h4 code,
+:root h5 code,
+:root h6 code {
+  color: unset;
+  background: unset;
+  padding: unset;
+  margin: unset;
+  font-size: .9em;
+  font-weight: bold;
+}
+
+/* Override links color */
+:root a:hover {
+  color: #ff7b00;
+}
+:root nav a:hover {
+  color: var(--md-accent-fg-color);
+}
+
+:root img {
+  color: #584394;
+  text-align: center;
+  font-size: 0.9em;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Metadata at the bottom of a page */
+:root .md-source-file {
+  color: #584394;
+}
+
+/* Override code blocks */
+:root .md-typeset code {
+  border-radius: 0.4em;
+}
+
+:root a code {
+  font-family: monospace;
+  background: #140b2f;
+  word-break: keep-all;
+}
+
+:root a code:hover {
+  background: #140b2f;
+}
+
+:root *:not(:focus-visible) {
+  outline-color: var(--md-accent-fg-color--transparent);
+  outline-width: 0;
+  outline-offset: 2px;
+  outline-style: none;
+}
+
+:root *:focus-visible {
+  outline-color: var(--md-accent-fg-color);
+  outline-width: 2px;
+  outline-offset: 0;
+  outline-style: solid;
+  transition: outline-offset 0.15s, outline-color 0.15s;
+}
+
+:root .md-search *:focus-visible {
+  outline: none
+}
+
+:root p code,
+:root ul code,
+:root ol code,
+:root table code {
+  font-size: .9em
+}
+
+/* Override search input */
+@media screen and (min-width: 60em) {
+  :root .md-search__form {
+    background-color: #2e1b66;
+    height: 1.8rem;
+    border-radius: var(--search-border-radius);
+  }
+}
+
+:root [data-md-toggle="search"]:checked ~ .md-header .md-search__form {
+  border-radius: var(--search-border-radius) var(--search-border-radius) 0 0;
+}
+
+:root [dir="ltr"] .md-search__output, [dir="rtl"] .md-search__output {
+  border-bottom-right-radius: var(--search-border-radius);
+}
+
+:root [dir="ltr"] .md-search__output {
+  border-bottom-left-radius: var(--search-border-radius);
+}
+
+:root details.md-search-result__more:nth-child(2) {
+  background-color: var(--md-default-fg-color--lightest);
+}
+
+.md-typeset details {
+  font-size: .7rem;
+}
+
+/* Override search popup overlay */
+:root .md-search__overlay {
+  background-color: rgba(7, 0, 28, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+/* Override table style */
+:root .md-typeset table:not([class]) thead {
+  font-size: .7rem;
+}
+:root .md-typeset table:not([class]) tbody {
+  font-size: .8rem;
+}
+:root .md-typeset table:not([class]) td {
+  padding: .75em 1em;
+}
+:root .md-typeset table code {
+  word-break: keep-all;
+}
+:root .md-typeset table thead th {
+  padding: .6em 1.25em;
+}
+:root .md-typeset table thead {
+  background-color: rgba(7, 0, 28, 0.15);
+  color: var(--md-primary-bg-color--light);
+}
+
+/* Definition list */
+:root .md-typeset dl dt {
+  color: #68549b;
+  font-size: 1em;
+}
+
+:root .md-typeset dl dt code {
+  font-size: 0.8rem;
+  background-color: unset;
+}
+
+:root .md-typeset dl dd {
+  margin-top: 0.25em;
+  margin-bottom: 1em;
+}
+
+:root .md-typeset dl dd p:first-of-type {
+  margin-top: 0.25em;
+}
