@@ -1,3 +1,12 @@
+> [!WARNING]
+> **This project is replaced by [Solarus Launcher](https://github.com/LAB0ULANGE/Solarus-launcher-vita)** (version 2.0).
+> Solarus Launcher downloads and runs all the Solarus games on the PS Vita, including Mystery of Solarus DX. It installs over this version (same title ID `SOLR00002`) and keeps your Mystery of Solarus DX saves.
+> This repository is no longer updated.
+>
+> **Ce projet est remplacé par [Solarus Launcher](https://github.com/LAB0ULANGE/Solarus-launcher-vita)** (version 2.0).
+> Solarus Launcher télécharge et lance tous les jeux Solarus sur PS Vita, dont Mystery of Solarus DX. Il s'installe par-dessus cette version (même title ID `SOLR00002`) et conserve vos sauvegardes de Mystery of Solarus DX.
+> Ce dépôt n'est plus mis à jour.
+
 <div align="center">
 <img alt="Solarus logo" src="images/solarus_logo.svg" width="400" style="margin-bottom: 2em;"/>
 </div>
