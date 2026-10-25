@@ -1,6 +1,6 @@
 # Solarus Launcher for PS Vita
 
-**[⬇ Download SolarusLauncher.vpk](https://github.com/LAB0ULANGE/Solarus-launcher-vita/releases/latest/download/SolarusLauncher.vpk)** · [All releases](https://github.com/LAB0ULANGE/Solarus-launcher-vita/releases) · [Version française plus bas](#version-française)
+**[⬇ Download SolarusLauncher.vpk](https://github.com/LAB0ULANGE/solarus-vita/releases/latest/download/SolarusLauncher.vpk)** · [All releases](https://github.com/LAB0ULANGE/solarus-vita/releases) · [Version française plus bas](#version-française)
 
 A port of the [Solarus](https://www.solarus-games.org) 2.0 engine to the PlayStation Vita, with a built-in quest launcher.
 Browse the free games published on solarus-games.org, download them and play them directly on your Vita — no PC needed.
@@ -32,7 +32,7 @@ Browse the free games published on solarus-games.org, download them and play the
 
 ## Installation
 
-1. **[Download SolarusLauncher.vpk](https://github.com/LAB0ULANGE/Solarus-launcher-vita/releases/latest/download/SolarusLauncher.vpk)**.
+1. **[Download SolarusLauncher.vpk](https://github.com/LAB0ULANGE/solarus-vita/releases/latest/download/SolarusLauncher.vpk)**.
 2. Copy it to your Vita and install it with VitaShell.
 3. Launch **Solarus Launcher**, pick a game and press X to download it.
 
@@ -69,7 +69,7 @@ This project is not affiliated with Nintendo or Sony.
 
 ## Version française
 
-**[⬇ Télécharger SolarusLauncher.vpk](https://github.com/LAB0ULANGE/Solarus-launcher-vita/releases/latest/download/SolarusLauncher.vpk)**
+**[⬇ Télécharger SolarusLauncher.vpk](https://github.com/LAB0ULANGE/solarus-vita/releases/latest/download/SolarusLauncher.vpk)**
 
 Un portage du moteur [Solarus](https://www.solarus-games.org) 2.0 sur PlayStation Vita, avec un lanceur de jeux intégré.
 Parcourez les jeux gratuits publiés sur solarus-games.org, téléchargez-les et jouez-y directement sur votre Vita, sans passer par un PC.
@@ -89,7 +89,7 @@ Parcourez les jeux gratuits publiés sur solarus-games.org, téléchargez-les et
 
 ### Installation
 
-1. **[Téléchargez SolarusLauncher.vpk](https://github.com/LAB0ULANGE/Solarus-launcher-vita/releases/latest/download/SolarusLauncher.vpk)**.
+1. **[Téléchargez SolarusLauncher.vpk](https://github.com/LAB0ULANGE/solarus-vita/releases/latest/download/SolarusLauncher.vpk)**.
 2. Copiez-le sur votre Vita et installez-le avec VitaShell.
 3. Lancez **Solarus Launcher**, choisissez un jeu et appuyez sur X pour le télécharger.
 
